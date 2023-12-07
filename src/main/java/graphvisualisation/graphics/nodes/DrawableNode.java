@@ -16,21 +16,30 @@ public class DrawableNode extends StackPane {
 
     private final int id;
     private double xPos = 0, yPos = 0;
+    private final Circle border;
     private final Text textID;
 
     public DrawableNode(int id) {
         this.id = id;
+
+        border = new Circle();
+        border.setFill(null);
+        border.setStrokeWidth(BORDER_WIDTH);
+        border.setStroke(Color.BLACK);
         
         textID = new Text(Integer.toString(id));
         textID.setFont(new Font(FONT_SIZE));
 
-        double radius = (textID.getLayoutBounds().getWidth() / 2) + NODE_PADDING;
+        double radius = getBaseRadius();
+        border.setRadius(radius);
+
         if (radius > maxRadius) maxRadius = radius;
 
+        draw();
     }
     
-    public boolean isDefined() {
-        return getChildren().size() == 2;
+    public boolean isUndefined() {
+        return getChildren().size() != 2 || !(getChildren().get(0) instanceof Circle) || !(getChildren().get(1) instanceof Text);
     }
 
     public int getNodeID() {
@@ -38,8 +47,11 @@ public class DrawableNode extends StackPane {
     }
 
     public double getRadius() {
-        if (!isDefined()) return 0;
-        return ((Circle) getChildren().get(0)).getRadius();
+        return border.getRadius();
+    }
+
+    public double getBaseRadius() {
+        return (textID.getLayoutBounds().getWidth() / 2) + NODE_PADDING;
     }
 
     public void setPosition(Point point) {
@@ -58,45 +70,51 @@ public class DrawableNode extends StackPane {
     }
 
     public void setCentre(double x, double y) {
-        if (isDefined()) {
-            double radius = getRadius();
-            xPos = x - radius;
-            yPos = y - radius;
-            setLayoutX(xPos);
-            setLayoutY(yPos);
-        }
+        double radius = getRadius();
+        xPos = x - radius;
+        yPos = y - radius;
+        setLayoutX(xPos);
+        setLayoutY(yPos);
     }
     
     public Point getCentre() {
-        if (!isDefined()) return null;
         double radius = getRadius();
         return new Point(xPos + radius, yPos + radius);
     }
 
-    public StackPane draw() {
 
-        Circle border = new Circle();
-        border.setFill(null);
-        border.setStrokeWidth(BORDER_WIDTH);
-        border.setStroke(Color.BLACK);
-        border.setRadius(maxRadius);
-        
-        if (isDefined()) getChildren().clear();
+    private StackPane draw() {
+
+        getChildren().clear();
         getChildren().addAll(border, textID);
 
         return this;
     }
-    
-    public void redrawMaintainCentre() {
-        if (isDefined()) {
-            Point centre = getCentre();
-            draw();
-            setCentre(centre.getX(), centre.getY());
-        }
+
+    public StackPane matchSize() {
+        return matchSize(false);
+    }
+
+    public StackPane matchSize(boolean maintainCentre) {
+        return setRadius(maxRadius, maintainCentre);
+    }
+
+    public StackPane resetSize() {
+        return resetSize(false);
+    }
+
+    public StackPane resetSize(boolean maintainCentre) {
+        return setRadius(getBaseRadius(), maintainCentre);
+    }
+
+    private StackPane setRadius(double radius, boolean maintainCentre) {
+        Point centre = getCentre();
+        border.setRadius(radius);
+        if (maintainCentre) setCentre(centre);
+        return draw();
     }
 
     public Edge connectNode(DrawableNode node) throws UndefinedNodeException, InvalidEdgeException {
         return new Edge(this, node);
     }
-
 }

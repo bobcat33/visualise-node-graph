@@ -8,18 +8,29 @@ public class Edge extends Line {
 
     public static final double EDGE_WIDTH = 2d;
 
+    private final DrawableNode startNode;
+    private final DrawableNode endNode;
+
     public Edge(DrawableNode startNode, DrawableNode endNode) throws UndefinedNodeException, InvalidEdgeException {
-        if (!startNode.isDefined()) throw new UndefinedNodeException(startNode);
-        if (!endNode.isDefined()) throw new UndefinedNodeException(endNode);
+        if (startNode.isUndefined()) throw new UndefinedNodeException(startNode);
+        if (endNode.isUndefined()) throw new UndefinedNodeException(endNode);
         if (startNode == endNode || startNode.getNodeID() == endNode.getNodeID()) throw new InvalidEdgeException(startNode, endNode);
+
+        this.startNode = startNode;
+        this.endNode = endNode;
+
 
         setStrokeLineCap(StrokeLineCap.BUTT);
         setStrokeWidth(EDGE_WIDTH);
 
-        connectToNodes(startNode, endNode);
+        connectToNodes();
     }
 
-    private void connectToNodes(DrawableNode startNode, DrawableNode endNode) {
+    public void reconnect() {
+        connectToNodes();
+    }
+
+    private void connectToNodes() {
         Point startCentre = startNode.getCentre();
         Point endCentre = endNode.getCentre();
 

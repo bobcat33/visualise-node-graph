@@ -17,14 +17,12 @@ public class Canvas {
 
     public Canvas() throws UndefinedNodeException, InvalidEdgeException {
 
+        // Just creating nodes for testing purposes, this will later be automated by converting a matrix of nodes into
+        // a map, but that's a headache for later
         DrawableNode node1 = new DrawableNode(10);
-        node1.draw();
         DrawableNode node2 = new DrawableNode(100);
-        node2.draw();
         node1.setCentre(150, 150);
         node2.setCentre(450, 450);
-
-//        node1.redrawMaintainCentre();
 
         canvas.getChildren().addAll(node1, node2, new Edge(node1, node2));
 
