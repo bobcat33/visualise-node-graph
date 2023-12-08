@@ -11,7 +11,7 @@ public class DrawableNode extends StackPane {
 
     public static double maxRadius;
     public static final double NODE_PADDING = 30d,
-                                BORDER_WIDTH = 0.5d,
+                                BORDER_WIDTH = 20d,
                                 FONT_SIZE = 30d;
 
     private final int id;
@@ -54,6 +54,10 @@ public class DrawableNode extends StackPane {
         return (textID.getLayoutBounds().getWidth() / 2) + NODE_PADDING;
     }
 
+    public double getNodeWidth() {
+        return getBoundsInParent().getWidth();
+    }
+
     public void setPosition(Point point) {
         setPosition(point.getX(), point.getY());
     }
@@ -63,6 +67,11 @@ public class DrawableNode extends StackPane {
         yPos = y;
         setLayoutX(x);
         setLayoutY(y);
+        draw();
+    }
+
+    public Point getPosition() {
+        return new Point(xPos, yPos);
     }
 
     public void setCentre(Point point) {
@@ -70,48 +79,46 @@ public class DrawableNode extends StackPane {
     }
 
     public void setCentre(double x, double y) {
-        double radius = getRadius();
-        xPos = x - radius;
-        yPos = y - radius;
+        double nodeCentre = getNodeWidth()/2;
+        xPos = x - nodeCentre;
+        yPos = y - nodeCentre;
         setLayoutX(xPos);
         setLayoutY(yPos);
+        draw();
     }
     
     public Point getCentre() {
-        double radius = getRadius();
-        return new Point(xPos + radius, yPos + radius);
+        double nodeCentre = getNodeWidth()/2;
+        return new Point(xPos + nodeCentre, yPos + nodeCentre);
     }
 
 
-    private StackPane draw() {
-
+    private void draw() {
         getChildren().clear();
         getChildren().addAll(border, textID);
-
-        return this;
     }
 
-    public StackPane matchSize() {
-        return matchSize(false);
+    public void matchSize() {
+        matchSize(false);
     }
 
-    public StackPane matchSize(boolean maintainCentre) {
-        return setRadius(maxRadius, maintainCentre);
+    public void matchSize(boolean maintainCentre) {
+        setRadius(maxRadius, maintainCentre);
     }
 
-    public StackPane resetSize() {
-        return resetSize(false);
+    public void resetSize() {
+        resetSize(false);
     }
 
-    public StackPane resetSize(boolean maintainCentre) {
-        return setRadius(getBaseRadius(), maintainCentre);
+    public void resetSize(boolean maintainCentre) {
+        setRadius(getBaseRadius(), maintainCentre);
     }
 
-    private StackPane setRadius(double radius, boolean maintainCentre) {
+    private void setRadius(double radius, boolean maintainCentre) {
         Point centre = getCentre();
         border.setRadius(radius);
         if (maintainCentre) setCentre(centre);
-        return draw();
+        draw();
     }
 
     public Edge connectNode(DrawableNode node) throws UndefinedNodeException, InvalidEdgeException {

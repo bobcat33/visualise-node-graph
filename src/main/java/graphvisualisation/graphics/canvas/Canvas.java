@@ -6,6 +6,7 @@ import graphvisualisation.graphics.nodes.InvalidEdgeException;
 import graphvisualisation.graphics.nodes.UndefinedNodeException;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.shape.Line;
 
 public class Canvas {
 
@@ -22,9 +23,15 @@ public class Canvas {
         DrawableNode node1 = new DrawableNode(10);
         DrawableNode node2 = new DrawableNode(100);
         node1.setCentre(150, 150);
-        node2.setCentre(450, 450);
+        node2.setCentre(150, 450);
 
-        canvas.getChildren().addAll(node1, node2, new Edge(node1, node2));
+        Point nodePos = node1.getPosition();
+        Point nodeCen = node1.getCentre();
+
+        Line lineX = new Line(nodeCen.getX(), nodePos.getY(), nodeCen.getX(), nodePos.getY() + node1.getNodeWidth());
+        Line lineY = new Line(nodePos.getX(), nodeCen.getY(), nodePos.getX() + node1.getNodeWidth(), nodeCen.getY());
+
+        canvas.getChildren().addAll(node1, node2, new Edge(node1, node2), lineX, lineY);
 
         root.getChildren().add(canvas);
 
