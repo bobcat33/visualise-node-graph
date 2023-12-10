@@ -1,6 +1,8 @@
-package graphvisualisation.graphics.nodes;
+package graphvisualisation.graphics.objects;
 
 import graphvisualisation.graphics.canvas.Point;
+import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
+import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -9,6 +11,7 @@ import javafx.scene.text.Text;
 
 public class DrawableNode extends StackPane {
 
+    // todo: i am aware this is an unsafe way of doing this. i promise i will fix it
     public static double maxRadius;
     public static final double NODE_PADDING = 30d,
                                 BORDER_WIDTH = 2d,
@@ -62,7 +65,7 @@ public class DrawableNode extends StackPane {
 
     /**
      * Get the radius of the circle used to display the border. This radius DOES NOT include the border width.
-     * @see DrawableNode#getNodeWidth()
+     * @see DrawableNode#getNodeRadius()
      */
     public double getCircleRadius() {
         return border.getRadius();
@@ -77,10 +80,11 @@ public class DrawableNode extends StackPane {
     }
 
     /**
-     * Get the full width of the node. Used to obtain a more accurate width than {@link DrawableNode#getCircleRadius()}
+     * Get the full radius of the node, including the border width.
+     * @see DrawableNode#getCircleRadius()
      */
-    public double getNodeWidth() {
-        return getBoundsInParent().getWidth();
+    public double getNodeRadius() {
+        return getCircleRadius() + BORDER_WIDTH;
     }
 
     /**
@@ -119,7 +123,7 @@ public class DrawableNode extends StackPane {
      * @see DrawableNode#setCentre(Point)
      */
     public void setCentre(double x, double y) {
-        double nodeCentre = getNodeWidth()/2;
+        double nodeCentre = getNodeRadius();
         xPos = x - nodeCentre;
         yPos = y - nodeCentre;
         setLayoutX(xPos);
@@ -131,12 +135,14 @@ public class DrawableNode extends StackPane {
      * Get the position of the centre of the node.
      */
     public Point getCentre() {
-        double nodeCentre = getNodeWidth()/2;
+        double nodeCentre = getNodeRadius();
         return new Point(xPos + nodeCentre, yPos + nodeCentre);
     }
 
+    // todo: figure out how to remove this completely
     /**
      * Clear and repopulate the graphic elements stored.
+     * @implNote mostly useless
      */
     private void draw() {
         getChildren().clear();
@@ -211,5 +217,36 @@ public class DrawableNode extends StackPane {
     public Edge connectNode(DrawableNode node, boolean successor) throws UndefinedNodeException, InvalidEdgeException {
         if (successor) return new Edge(this, node, true);
         return new Edge(node, this, true);
+    }
+
+    /**
+     * Display data about the node for debugging.
+     * @deprecated only to be used for debugging
+     */
+    public void printNodeInfo() {
+
+        System.out.println("Node: " + id
+                + "\nCircle Radius: " + getCircleRadius()
+                + "\nNode Radius: " + getNodeRadius()
+                + "\nWidth: " + getNodeRadius()*2
+                + "\nCentre: ("  + getCentre().getX() + ", " + getCentre().getY() + ")"
+                + "\nOrigin: ("  + getPosition().getX() + ", " + getPosition().getY() + ")"
+        );
+    }
+
+    /**
+     * Returns true if and only if the object is not null, a {@code DrawableNode} object, and has the same ID as
+     * this node.
+     * @param o the object to compare this node against
+     * @return true if the nodes have the same ID
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof DrawableNode node)) return false;
+        boolean sameID = id == node.id;
+        // todo need to decide if samePosition will be required when comparing
+        boolean samePosition = xPos == node.xPos && yPos == node.yPos;
+        return sameID/* && samePosition*/;
     }
 }
