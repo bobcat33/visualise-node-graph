@@ -12,6 +12,7 @@ import javafx.scene.text.Text;
 public class DrawableNode extends StackPane {
 
     // todo: i am aware this is an unsafe way of doing this. i promise i will fix it
+    /**Maximum radius among nodes that have been created.*/
     public static double maxRadius;
     public static final double NODE_PADDING = 30d,
                                 BORDER_WIDTH = 2d,
@@ -65,7 +66,7 @@ public class DrawableNode extends StackPane {
 
     /**
      * Get the radius of the circle used to display the border. This radius DOES NOT include the border width.
-     * @see DrawableNode#getNodeRadius()
+     * @see #getNodeRadius()
      */
     public double getCircleRadius() {
         return border.getRadius();
@@ -81,7 +82,7 @@ public class DrawableNode extends StackPane {
 
     /**
      * Get the full radius of the node, including the border width.
-     * @see DrawableNode#getCircleRadius()
+     * @see #getCircleRadius()
      */
     public double getNodeRadius() {
         return getCircleRadius() + BORDER_WIDTH;
@@ -89,13 +90,15 @@ public class DrawableNode extends StackPane {
 
     /**
      * Set the position of the node, defines the top left corner co-ordinates.
+     * @see #setPosition(double, double)
      */
     public void setPosition(Point point) {
         setPosition(point.getX(), point.getY());
     }
 
     /**
-     * @see DrawableNode#setPosition(Point)
+     * Set the position of the node, defines the top left corner co-ordinates.
+     * @see #setPosition(Point)
      */
     public void setPosition(double x, double y) {
         xPos = x;
@@ -114,13 +117,15 @@ public class DrawableNode extends StackPane {
 
     /**
      * Set the position of the node, defines the position of the centre of the node.
+     * @see #setCentre(double, double)
      */
     public void setCentre(Point point) {
         setCentre(point.getX(), point.getY());
     }
 
     /**
-     * @see DrawableNode#setCentre(Point)
+     * Set the position of the node, defines the position of the centre of the node.
+     * @see #setCentre(Point)
      */
     public void setCentre(double x, double y) {
         double nodeCentre = getNodeRadius();
@@ -151,7 +156,7 @@ public class DrawableNode extends StackPane {
 
     /**
      * Resize the node based on the largest current node.
-     * @see DrawableNode#matchSize(boolean)
+     * @see #matchSize(boolean)
      */
     public void matchSize() {
         matchSize(false);
@@ -167,7 +172,7 @@ public class DrawableNode extends StackPane {
 
     /**
      * Resize the node to its original size using {@link DrawableNode#getBaseRadius()}
-     * @see DrawableNode#resetSize(boolean)
+     * @see #resetSize(boolean)
      */
     public void resetSize() {
         resetSize(false);
@@ -199,7 +204,7 @@ public class DrawableNode extends StackPane {
      * @return the {@link Edge} created
      * @throws UndefinedNodeException if either of the nodes are undefined
      * @throws InvalidEdgeException if the edge would be invalid
-     * @see DrawableNode#connectNode(DrawableNode, boolean)
+     * @see #connectNode(DrawableNode, boolean)
      */
     public Edge connectNode(DrawableNode node) throws UndefinedNodeException, InvalidEdgeException {
         return new Edge(this, node);
@@ -212,7 +217,7 @@ public class DrawableNode extends StackPane {
      * @return the {@link Edge} created
      * @throws UndefinedNodeException if either of the nodes are undefined
      * @throws InvalidEdgeException if the edge would be invalid
-     * @see DrawableNode#connectNode(DrawableNode)
+     * @see #connectNode(DrawableNode)
      */
     public Edge connectNode(DrawableNode node, boolean successor) throws UndefinedNodeException, InvalidEdgeException {
         if (successor) return new Edge(this, node, true);

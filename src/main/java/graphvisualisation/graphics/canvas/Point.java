@@ -7,8 +7,8 @@ public class Point extends Point2D {
     // todo: at the moment this class relies on extending Point2D, once I have finished the code I will extract the methods I need and remove the superclass
     public Point(double x, double y) {
         super(x, y);
-        if (x > Canvas.WIDTH || x < 0 || y > Canvas.HEIGHT || y < 0)
-            System.err.println("WARN: Point (" + x + ", " + y + ") is out of canvas bounds.");
+        /*if (x > Canvas.WIDTH || x < 0 || y > Canvas.HEIGHT || y < 0)
+            System.err.println("WARN: Point (" + x + ", " + y + ") is out of canvas bounds.");*/
     }
 
     @Override

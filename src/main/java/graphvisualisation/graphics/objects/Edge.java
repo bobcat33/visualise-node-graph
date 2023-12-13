@@ -56,6 +56,15 @@ public class Edge extends Parent {
     }
 
     /**
+     * Check if this edge involves the specified node, i.e. the node is at either end of the edge.
+     * @param nodeID the ID of the node
+     * @return true if the node is involved in the edge, false otherwise
+     */
+    public boolean involves(int nodeID) {
+        return startNode.getNodeID() == nodeID || endNode.getNodeID() == nodeID;
+    }
+
+    /**
      * @return the edge's starting node as a {@link DrawableNode}.
      * @deprecated currently unused so set to private
      */
@@ -120,6 +129,8 @@ public class Edge extends Parent {
          * be drawn on the endNode side.
          */
         private void connectToNode() {
+            this.getPoints().clear();
+
             Point u = getNormalisedLineVector();
 
             Point endPoint = endNode.getCentre().sub(u.multiply(endNode.getCircleRadius()));
