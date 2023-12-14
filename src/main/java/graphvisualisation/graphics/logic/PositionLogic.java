@@ -45,7 +45,7 @@ public class PositionLogic {
             int iterations = 0;
             while (canIterate && !canvas.createNode(i, generateCanvasPoint())) {
                 if (iterations > 1000) {
-                    System.err.println("Iterated too many times while trying to position node " + i + ", no longer repositioning any nodes.");
+                    System.out.println("Iterated too many times while trying to position node " + i + ", no longer repositioning any nodes.");
                     canIterate = false;
                 }
                 iterations++;
@@ -57,9 +57,13 @@ public class PositionLogic {
                 if (edgeMatrix[node1][node2]) {
                     System.out.println("Creating edge between " + node1 + " and " + node2);
                     if (!canvas.createEdge(node1, node2, true)) {
-                        if (attempts > 1000) System.err.println("Attempted over 1000 graphs, finalising with invalid edge.");
-                        else generateRandomCanvas(canvas, edgeMatrix, ++attempts);
-                        return;
+                        // todo: instead this could make automatic adjustments to the parameters, once click and drag
+                        //  feature has been made - or could be best to just display "clean graph could not be found"
+                        if (attempts > 1000) System.out.println("Attempted over 1000 graphs, finalising with invalid edge.");
+                        else {
+                            generateRandomCanvas(canvas, edgeMatrix, ++attempts);
+                            return;
+                        }
                     }
                 }
             }

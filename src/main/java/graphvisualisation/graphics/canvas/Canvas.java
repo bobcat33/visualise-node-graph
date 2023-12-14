@@ -29,35 +29,6 @@ public class Canvas extends Parent {
 
         PositionLogic.generateRandomCanvas(this, edgeMatrix);
 
-        // Just creating nodes for testing purposes, this will later be automated by converting a matrix of nodes into
-        // a map, but that's a headache for later
-
-        /*createNode(1000000, 150, 150);
-        createNode(10, 300, 450);
-        createNode(25, 450, 150);
-        createNode(30, 375, 300);*/
-
-        // Now generating random positions, before I build a system for generating actual points I will
-        // first make a system that repeatedly places nodes randomly until a graph is created with no
-        // overlapping lines
-        /*createNode(1000000, PositionLogic.generateCanvasPoint());
-        createNode(10, PositionLogic.generateCanvasPoint());
-        createNode(25, PositionLogic.generateCanvasPoint());
-        createNode(30, PositionLogic.generateCanvasPoint());
-
-        createEdge(1000000, 10, true);
-        createEdge(1000000, 25, false);
-        createEdge(10, 25, true);
-        createEdge(25, 10, true);
-
-        drawAndScale();
-
-        resizeNode(30, false, true);
-        resizeNode(25, false, true);*/
-
-//        drawNode(9, 300, 300);
-//        drawNode(30, 500, 300);
-//        drawEdge(9, 30);
     }
 
     // Ignore that half this code is just doc comments
@@ -204,7 +175,7 @@ public class Canvas extends Parent {
     public boolean createNode(int nodeID, double x, double y) {
         DrawableNode node = makeNode(nodeID);
         node.setCentre(x, y);
-        return !node.intersectsAnyOf(nodes);
+        return node.isValidAmong(nodes);
     }
 
     /**
@@ -233,7 +204,7 @@ public class Canvas extends Parent {
     public boolean createNodePos(int nodeID, double x, double y) {
         DrawableNode node = makeNode(nodeID);
         node.setPosition(x, y);
-        return !node.intersectsAnyOf(nodes);
+        return node.isValidAmong(nodes);
     }
 
     /**

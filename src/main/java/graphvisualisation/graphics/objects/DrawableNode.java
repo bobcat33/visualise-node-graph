@@ -1,5 +1,6 @@
 package graphvisualisation.graphics.objects;
 
+import graphvisualisation.graphics.canvas.Canvas;
 import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
@@ -17,8 +18,9 @@ public class DrawableNode extends StackPane {
     /**Maximum radius among nodes that have been created.*/
     public static double maxRadius;
     public static final double NODE_PADDING = 30d,
-                                BORDER_WIDTH = 2d,
-                                FONT_SIZE = 30d;
+            BORDER_WIDTH = 2d,
+            FONT_SIZE = 30d,
+            MIN_SPACE = Edge.Arrow.HEIGHT * 3;
 
     private final int id;
     private double xPos = 0, yPos = 0;
@@ -196,6 +198,18 @@ public class DrawableNode extends StackPane {
         draw();
     }
 
+    public static double distanceBetween(DrawableNode node1, DrawableNode node2) {
+        return node1.distanceBetween(node2);
+    }
+
+    public double distanceBetween(DrawableNode node) {
+        double distance = getCentre().distanceTo(node.getCentre());
+        double r1 = getNodeRadius();
+        double r2 = node.getNodeRadius();
+
+        return distance - (r1 + r2);
+    }
+
     /**
      * Determine if this node intersects any other node. It is considered an intersection if any part of either node is
      * touching/contained within the other. This method does not compare equal nodes to each other.
@@ -218,18 +232,26 @@ public class DrawableNode extends StackPane {
      * @return true if the nodes intersect, false otherwise
      */
     public boolean intersects(DrawableNode node) {
-        Point c1 = getCentre();
-        Point c2 = node.getCentre();
-        double r1 = getNodeRadius();
-        double r2 = node.getNodeRadius();
-
-        double xDifference = c1.getX() - c2.getX();
-        double yDifference = c1.getY() - c2.getY();
-
-        double distance = Math.sqrt((xDifference * xDifference) + (yDifference * yDifference));
-
         // If either circle contains the other, if the circles intersect or if the circles touch then return true
-        return distance <= r1 + r2;
+        return distanceBetween(node) <= 0;
+    }
+
+    public boolean isValidAmong(ArrayList<DrawableNode> nodes) {
+        double radius = getNodeRadius();
+        Point centre = getCentre();
+        double cx = centre.getX();
+        double cy = centre.getY();
+
+        // If out of canvas bounds
+        if (cx - radius < 0 || cy - radius < 0 || cx + radius > Canvas.WIDTH || cy + radius > Canvas.HEIGHT)
+            return false;
+
+        for (DrawableNode node : nodes) {
+            if (!this.equals(node))
+                if (distanceBetween(node) <= MIN_SPACE)
+                    return false;
+        }
+        return true;
     }
 
     /**

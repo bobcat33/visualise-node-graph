@@ -46,7 +46,7 @@ public class Point extends Point2D {
         return new Point(this.getX() - point.getX(), this.getY() - point.getY());
     }
 
-    public double distance(Point point) {
+    public double distanceTo(Point point) {
 
         double xDifference = this.getX() - point.getX();
         double yDifference = this.getY() - point.getY();

@@ -109,11 +109,11 @@ public class Edge extends Parent {
         double d1 = closest.distance(x1, y1);
         double d2 = closest.distance(x2, y2);
 
-        System.out.println("Checking if line (" + startNode.getNodeID() + " -> " + endNode.getNodeID() + ") intersects node " + node.getNodeID());
+//        System.out.println("Checking if line (" + startNode.getNodeID() + " -> " + endNode.getNodeID() + ") intersects node " + node.getNodeID());
 
         // If the point is not on the line then the node does not intersect
         if (!(d1 + d2 >= lineLength-0.01 && d1 + d2 <= lineLength+0.01)) {
-            System.out.println("Point is not on line.\nline length = " + lineLength + "\nd1 + d2 = " + (d1 + d2));
+//            System.out.println("Point is not on line.\nline length = " + lineLength + "\nd1 + d2 = " + (d1 + d2));
             return false;
         }
 
