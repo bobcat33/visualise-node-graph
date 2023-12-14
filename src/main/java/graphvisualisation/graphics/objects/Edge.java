@@ -10,6 +10,8 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeLineCap;
 
+import java.util.ArrayList;
+
 public class Edge extends Parent {
     public static final Color LINE_COLOUR = Color.BLACK;
 
@@ -47,6 +49,7 @@ public class Edge extends Parent {
         }
     }
 
+    // todo: ensure that this method is always called when nodes are moved/resized
     /**
      * Reconnect the edge to its nodes. If either node changes in size or position this method should be called.
      */
@@ -63,6 +66,73 @@ public class Edge extends Parent {
     public boolean involves(int nodeID) {
         return startNode.getNodeID() == nodeID || endNode.getNodeID() == nodeID;
     }
+
+    public boolean intersectsAnyOf(ArrayList<DrawableNode> nodes) {
+        boolean hasIntersection = false;
+        for (DrawableNode node : nodes) {
+            if (intersectsNode(node)) hasIntersection = true;
+        }
+        return hasIntersection;
+    }
+
+    public boolean intersectsNode(DrawableNode node) {
+        // If the node is one of the ends of the line then ignore whether it intersects or not
+        if (involves(node.getNodeID())) return false;
+
+        Point startPoint = startNode.getCentre();
+        Point endPoint = endNode.getCentre();
+
+        Point nodeCentre = node.getCentre();
+
+        double cx = nodeCentre.getX();
+        double cy = nodeCentre.getY();
+
+        // Initialise the start and end coordinates of the line - (x1, y1) and (x2, y2)
+        double x1 = startPoint.getX(), x2 = endPoint.getX();
+        double y1 = startPoint.getY(), y2 = endPoint.getY();
+
+        // Find the distance between the x coordinates and the y coordinates
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+
+        // Find the length of the line
+        double lineLength = Math.sqrt(dx*dx + dy*dy);
+
+        double dot = ( ((cx-x1)*(x2-x1)) + ((cy-y1)*(y2-y1)) ) / Math.pow(lineLength,2);
+
+        // Find the closest point on the line using the dot product
+        double closestX = x1 + (dot * (x2-x1));
+        double closestY = y1 + (dot * (y2-y1));
+        Point closest = new Point(closestX, closestY);
+
+        // Get the distance between the closest point and either end of the line
+        double d1 = closest.distance(x1, y1);
+        double d2 = closest.distance(x2, y2);
+
+        System.out.println("Checking if line (" + startNode.getNodeID() + " -> " + endNode.getNodeID() + ") intersects node " + node.getNodeID());
+
+        // If the point is not on the line then the node does not intersect
+        if (!(d1 + d2 >= lineLength-0.01 && d1 + d2 <= lineLength+0.01)) {
+            System.out.println("Point is not on line.\nline length = " + lineLength + "\nd1 + d2 = " + (d1 + d2));
+            return false;
+        }
+
+        // Find the distance between the closest point and the centre of the circle
+        double distanceX = closestX - cx;
+        double distanceY = closestY - cy;
+        double distance = Math.sqrt((distanceX*distanceX) + (distanceY*distanceY));
+
+        if (distance<=node.getNodeRadius())
+            System.out.println("Intersected");
+//            System.out.println("Node " + node.getNodeID() + " is intersected by line from " + startNode.getNodeID() + " to " + endNode.getNodeID());
+        else
+            System.out.println("No intersection");
+
+
+        return distance<=node.getNodeRadius();
+
+    }
+
 
     /**
      * @return the edge's starting node as a {@link DrawableNode}.

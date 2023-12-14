@@ -107,8 +107,8 @@ public class Canvas extends Parent {
      * been created but have not been properly defined
      * @see #createEdge(int, int, boolean)
      */
-    public void createEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
-        createEdge(node1, node2, false);
+    public boolean createEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
+        return createEdge(node1, node2, false);
     }
 
     /**
@@ -124,8 +124,8 @@ public class Canvas extends Parent {
      * been created but have not been properly defined
      * @see #createEdge(int, int)
      */
-    public void createEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
-        makeEdge(node1, node2, directional);
+    public boolean createEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
+        return !makeEdge(node1, node2, directional).intersectsAnyOf(nodes);
     }
 
     /**
@@ -139,8 +139,8 @@ public class Canvas extends Parent {
      * been created but have not been properly defined
      * @see #drawEdge(int, int, boolean)
      */
-    public void drawEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
-        drawEdge(node1, node2, false);
+    public boolean drawEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
+        return drawEdge(node1, node2, false);
     }
 
     /**
@@ -154,9 +154,10 @@ public class Canvas extends Parent {
      * been created but have not been properly defined
      * @see #drawEdge(int, int)
      */
-    public void drawEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
-        createEdge(node1, node2, directional);
+    public boolean drawEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
+        boolean validEdge = createEdge(node1, node2, directional);
         draw(); // todo: rewrite to not require draw call, instead only find the specific edge
+        return validEdge;
     }
 
     // todo: split makeNode into getNode and makeNode
@@ -200,9 +201,10 @@ public class Canvas extends Parent {
      * @see #createNode(int)
      * @see #createNodePos(int, double, double)
      */
-    public void createNode(int nodeID, double x, double y) {
+    public boolean createNode(int nodeID, double x, double y) {
         DrawableNode node = makeNode(nodeID);
         node.setCentre(x, y);
+        return !node.intersectsAnyOf(nodes);
     }
 
     /**
@@ -214,8 +216,8 @@ public class Canvas extends Parent {
      * @see #createNode(int)
      * @see #createNodePos(int, double, double)
      */
-    public void createNode(int nodeID, Point point) {
-        createNode(nodeID, point.getX(), point.getY());
+    public boolean createNode(int nodeID, Point point) {
+        return createNode(nodeID, point.getX(), point.getY());
     }
 
     /**
@@ -228,9 +230,10 @@ public class Canvas extends Parent {
      * @see #createNode(int)
      * @see #createNode(int, double, double)
      */
-    public void createNodePos(int nodeID, double x, double y) {
+    public boolean createNodePos(int nodeID, double x, double y) {
         DrawableNode node = makeNode(nodeID);
         node.setPosition(x, y);
+        return !node.intersectsAnyOf(nodes);
     }
 
     /**
@@ -242,8 +245,8 @@ public class Canvas extends Parent {
      * @see #createNode(int)
      * @see #createNode(int, double, double)
      */
-    public void createNodePos(int nodeID, Point point) {
-        createNodePos(nodeID, point.getX(), point.getY());
+    public boolean createNodePos(int nodeID, Point point) {
+        return createNodePos(nodeID, point.getX(), point.getY());
     }
 
     /**
@@ -267,9 +270,10 @@ public class Canvas extends Parent {
      * @see #drawNode(int)
      * @see #drawNodePos(int, double, double)
      */
-    public void drawNode(int nodeID, double x, double y) {
-        createNode(nodeID, x, y);
+    public boolean drawNode(int nodeID, double x, double y) {
+        boolean validPosition = createNode(nodeID, x, y);
         draw();
+        return validPosition;
     }
 
     /**
@@ -280,8 +284,8 @@ public class Canvas extends Parent {
      * @see #drawNode(int)
      * @see #drawNodePos(int, double, double)
      */
-    public void drawNode(int nodeID, Point point) {
-        drawNode(nodeID, point.getX(), point.getY());
+    public boolean drawNode(int nodeID, Point point) {
+        return drawNode(nodeID, point.getX(), point.getY());
     }
 
     /**
@@ -293,9 +297,10 @@ public class Canvas extends Parent {
      * @see #drawNode(int)
      * @see #drawNode(int, double, double)
      */
-    public void drawNodePos(int nodeID, double x, double y) {
-        createNodePos(nodeID, x, y);
+    public boolean drawNodePos(int nodeID, double x, double y) {
+        boolean validPosition = createNodePos(nodeID, x, y);
         draw();
+        return validPosition;
     }
 
     /**
@@ -306,8 +311,8 @@ public class Canvas extends Parent {
      * @see #drawNode(int)
      * @see #drawNode(int, double, double)
      */
-    public void drawNodePos(int nodeID, Point point) {
-        drawNodePos(nodeID, point.getX(), point.getY());
+    public boolean drawNodePos(int nodeID, Point point) {
+        return drawNodePos(nodeID, point.getX(), point.getY());
     }
 
     public void clearCanvas() {

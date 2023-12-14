@@ -30,15 +30,38 @@ public class PositionLogic {
      * @param edgeMatrix a directed graph matrix of the nodes and their edges
      */
     public static void generateRandomCanvas(Canvas canvas, boolean[][] edgeMatrix) throws InvalidEdgeException, UndefinedNodeException {
+        generateRandomCanvas(canvas, edgeMatrix, 0);
+    }
+
+    /**
+     * Private recursive wrapper of {@link #generateRandomCanvas(Canvas, boolean[][])}
+     */
+    private static void generateRandomCanvas(Canvas canvas, boolean[][] edgeMatrix, int attempts) throws InvalidEdgeException, UndefinedNodeException {
+        System.out.println("Generating canvas, attempt " + (attempts + 1));
         canvas.clear();
 
+        boolean canIterate = true;
         for (int i = 0; i < edgeMatrix.length; i++) {
-            canvas.createNode(i, generateCanvasPoint());
+            int iterations = 0;
+            while (canIterate && !canvas.createNode(i, generateCanvasPoint())) {
+                if (iterations > 1000) {
+                    System.err.println("Iterated too many times while trying to position node " + i + ", no longer repositioning any nodes.");
+                    canIterate = false;
+                }
+                iterations++;
+            }
         }
 
         for (int node1 = 0; node1 < edgeMatrix.length; node1++) {
             for (int node2 = 0; node2 < edgeMatrix.length; node2++) {
-                if (edgeMatrix[node1][node2]) canvas.createEdge(node1, node2, true);
+                if (edgeMatrix[node1][node2]) {
+                    System.out.println("Creating edge between " + node1 + " and " + node2);
+                    if (!canvas.createEdge(node1, node2, true)) {
+                        if (attempts > 1000) System.err.println("Attempted over 1000 graphs, finalising with invalid edge.");
+                        else generateRandomCanvas(canvas, edgeMatrix, ++attempts);
+                        return;
+                    }
+                }
             }
         }
 

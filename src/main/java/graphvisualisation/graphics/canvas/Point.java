@@ -45,4 +45,12 @@ public class Point extends Point2D {
     public Point sub(Point point) {
         return new Point(this.getX() - point.getX(), this.getY() - point.getY());
     }
+
+    public double distance(Point point) {
+
+        double xDifference = this.getX() - point.getX();
+        double yDifference = this.getY() - point.getY();
+
+        return Math.sqrt((xDifference * xDifference) + (yDifference * yDifference));
+    }
 }

@@ -9,6 +9,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+import java.util.ArrayList;
+
 public class DrawableNode extends StackPane {
 
     // todo: i am aware this is an unsafe way of doing this. i promise i will fix it
@@ -129,11 +131,7 @@ public class DrawableNode extends StackPane {
      */
     public void setCentre(double x, double y) {
         double nodeCentre = getNodeRadius();
-        xPos = x - nodeCentre;
-        yPos = y - nodeCentre;
-        setLayoutX(xPos);
-        setLayoutY(yPos);
-        draw();
+        setPosition(x - nodeCentre, y - nodeCentre);
     }
 
     /**
@@ -196,6 +194,42 @@ public class DrawableNode extends StackPane {
         border.setRadius(radius);
         if (maintainCentre) setCentre(centre);
         draw();
+    }
+
+    /**
+     * Determine if this node intersects any other node. It is considered an intersection if any part of either node is
+     * touching/contained within the other. This method does not compare equal nodes to each other.
+     * @param nodes the nodes to check against this one
+     * @return true if the node does intersect another node in the list, false otherwise
+     */
+    public boolean intersectsAnyOf(ArrayList<DrawableNode> nodes) {
+        for (DrawableNode node : nodes) {
+            if (!this.equals(node)) {
+                if (this.intersects(node)) return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determine if this node intersects another. It is considered an intersection if any part of either node is
+     * touching/contained within the other. This method will compare equal nodes against each other.
+     * @param node the node to check against this one
+     * @return true if the nodes intersect, false otherwise
+     */
+    public boolean intersects(DrawableNode node) {
+        Point c1 = getCentre();
+        Point c2 = node.getCentre();
+        double r1 = getNodeRadius();
+        double r2 = node.getNodeRadius();
+
+        double xDifference = c1.getX() - c2.getX();
+        double yDifference = c1.getY() - c2.getY();
+
+        double distance = Math.sqrt((xDifference * xDifference) + (yDifference * yDifference));
+
+        // If either circle contains the other, if the circles intersect or if the circles touch then return true
+        return distance <= r1 + r2;
     }
 
     /**
