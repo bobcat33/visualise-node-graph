@@ -109,25 +109,13 @@ public class Edge extends Parent {
         double d1 = closest.distance(x1, y1);
         double d2 = closest.distance(x2, y2);
 
-//        System.out.println("Checking if line (" + startNode.getNodeID() + " -> " + endNode.getNodeID() + ") intersects node " + node.getNodeID());
-
         // If the point is not on the line then the node does not intersect
-        if (!(d1 + d2 >= lineLength-0.01 && d1 + d2 <= lineLength+0.01)) {
-//            System.out.println("Point is not on line.\nline length = " + lineLength + "\nd1 + d2 = " + (d1 + d2));
-            return false;
-        }
+        if (!(d1 + d2 >= lineLength-0.01 && d1 + d2 <= lineLength+0.01)) return false;
 
         // Find the distance between the closest point and the centre of the circle
         double distanceX = closestX - cx;
         double distanceY = closestY - cy;
         double distance = Math.sqrt((distanceX*distanceX) + (distanceY*distanceY));
-
-        if (distance<=node.getNodeRadius())
-            System.out.println("Intersected");
-//            System.out.println("Node " + node.getNodeID() + " is intersected by line from " + startNode.getNodeID() + " to " + endNode.getNodeID());
-        else
-            System.out.println("No intersection");
-
 
         return distance<=node.getNodeRadius();
 

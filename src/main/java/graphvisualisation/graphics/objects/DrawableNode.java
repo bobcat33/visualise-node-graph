@@ -13,21 +13,19 @@ import javafx.scene.text.Text;
 import java.util.ArrayList;
 
 public class DrawableNode extends StackPane {
-
-    // todo: i am aware this is an unsafe way of doing this. i promise i will fix it
-    /**Maximum radius among nodes that have been created.*/
-    public static double maxRadius;
     public static final double NODE_PADDING = 30d,
             BORDER_WIDTH = 2d,
             FONT_SIZE = 30d,
             MIN_SPACE = Edge.Arrow.HEIGHT * 3;
 
+    private final Canvas canvas;
     private final int id;
     private double xPos = 0, yPos = 0;
     private final Circle border;
     private final Text textID;
 
-    public DrawableNode(int id) {
+    public DrawableNode(Canvas canvas, int id) {
+        this.canvas = canvas;
         this.id = id;
 
         // Create the circle used for the border around the node
@@ -46,7 +44,7 @@ public class DrawableNode extends StackPane {
 
         // Store the radius if it is larger than the largest node. This is used if the implementation requires all nodes
         // to be the same size, using matchSize()
-        if (radius > maxRadius) maxRadius = radius;
+        canvas.updateMaxRadius(radius);
 
         draw();
     }
@@ -80,7 +78,7 @@ public class DrawableNode extends StackPane {
      * Get the radius of the node regardless of the greatest node size. Radius is determined using the width of
      * the text in the node and the NODE_PADDING property.
      */
-    public double getBaseRadius() {
+    private double getBaseRadius() {
         return (textID.getLayoutBounds().getWidth() / 2) + NODE_PADDING;
     }
 
@@ -100,6 +98,9 @@ public class DrawableNode extends StackPane {
         setPosition(point.getX(), point.getY());
     }
 
+    // todo: might be ideal to remove the position element from the node completely as ultimately the centre is
+    //  most useful. There could still be get and set position but instead should be renamed to be more specific.
+    //  Centre methods can then be renamed to remove the word centre - thus making the code cleaner
     /**
      * Set the position of the node, defines the top left corner co-ordinates.
      * @see #setPosition(Point)
@@ -167,7 +168,7 @@ public class DrawableNode extends StackPane {
      * @param maintainCentre true if the node should keep the same centre point after resizing
      */
     public void matchSize(boolean maintainCentre) {
-        setCircleRadius(maxRadius, maintainCentre);
+        setCircleRadius(canvas.maxNodeRadius(), maintainCentre);
     }
 
     /**
@@ -198,10 +199,21 @@ public class DrawableNode extends StackPane {
         draw();
     }
 
+    /**
+     * Find the size of the gap between the circular borders of two nodes.
+     * @param node1 the first node (in any order)
+     * @param node2 the second node (in any order)
+     * @return the distance between the nodes
+     */
     public static double distanceBetween(DrawableNode node1, DrawableNode node2) {
         return node1.distanceBetween(node2);
     }
 
+    /**
+     * Find the size of the gap between the circular borders of this node and the parameter node.
+     * @param node the node to get the distance from this one to
+     * @return the distance between this node and the parameter node
+     */
     public double distanceBetween(DrawableNode node) {
         double distance = getCentre().distanceTo(node.getCentre());
         double r1 = getNodeRadius();
@@ -236,15 +248,37 @@ public class DrawableNode extends StackPane {
         return distanceBetween(node) <= 0;
     }
 
-    public boolean isValidAmong(ArrayList<DrawableNode> nodes) {
+    /**
+     * Check that this node is within the bounds of its canvas.
+     * @return true if the node is within the bounds, false otherwise
+     */
+    public boolean isWithinCanvas() {
+        return isWithinCanvas(canvas);
+    }
+
+    /**
+     * Check that this node is within the bounds of the specified canvas.
+     * @param canvas the canvas to compare this nodes position to
+     * @return true if the node is within the bounds, false otherwise
+     */
+    public boolean isWithinCanvas(Canvas canvas) {
         double radius = getNodeRadius();
         Point centre = getCentre();
         double cx = centre.getX();
         double cy = centre.getY();
 
-        // If out of canvas bounds
-        if (cx - radius < 0 || cy - radius < 0 || cx + radius > Canvas.WIDTH || cy + radius > Canvas.HEIGHT)
-            return false;
+        return cx - radius >= 0 && cy - radius >= 0 && cx + radius <= canvas.width() && cy + radius <= canvas.height();
+    }
+
+    /**
+     * Check if this node is valid among a set of nodes, i.e. no part of the node falls outside its canvas bounds, it
+     * doesn't overlap or touch any of the nodes, and it is at least the {@link #MIN_SPACE minimum distance} from any
+     * other node. This method does not compare equal nodes against each other.
+     * @param nodes the nodes to check this one against
+     * @return true if the node is valid, false otherwise
+     */
+    public boolean isValidAmong(ArrayList<DrawableNode> nodes) {
+        if (!isWithinCanvas()) return false;
 
         for (DrawableNode node : nodes) {
             if (!this.equals(node))

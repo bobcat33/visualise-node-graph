@@ -2,13 +2,38 @@ package graphvisualisation.graphics.canvas;
 
 import javafx.geometry.Point2D;
 
+import java.util.Random;
+
 public class Point extends Point2D {
+    private static Random random = new Random();
 
     // todo: at the moment this class relies on extending Point2D, once I have finished the code I will extract the methods I need and remove the superclass
     public Point(double x, double y) {
         super(x, y);
         /*if (x > Canvas.WIDTH || x < 0 || y > Canvas.HEIGHT || y < 0)
             System.err.println("WARN: Point (" + x + ", " + y + ") is out of canvas bounds.");*/
+    }
+
+    /**
+     * Create a random point between values min and max.
+     * @param min the minimum x and y values
+     * @param max the maximum x and y values
+     * @return a new random {@code Point} between the minimum and maximum values
+     */
+    public static Point generateRandom(double min, double max) {
+        return generateRandom(min, min, max, max);
+    }
+
+    /**
+     * Create a random point between the minimum and maximum X and Y values.
+     * @param minX minimum X value
+     * @param minY minimum Y value
+     * @param maxX maximum X value
+     * @param maxY maximum Y value
+     * @return a new random {@code Point} between the minimum and maximum values
+     */
+    public static Point generateRandom(double minX, double minY, double maxX, double maxY) {
+        return new Point(random.nextDouble(maxX - minX) + minX, random.nextDouble(maxY - minY) + minY);
     }
 
     @Override

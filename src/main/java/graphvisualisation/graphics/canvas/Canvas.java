@@ -1,8 +1,8 @@
 package graphvisualisation.graphics.canvas;
 
-import graphvisualisation.data.storage.DataLoader;
+import graphvisualisation.data.graph.Matrix;
 import graphvisualisation.data.storage.InvalidFileException;
-import graphvisualisation.graphics.logic.PositionLogic;
+import graphvisualisation.graphics.logic.CanvasDrawer;
 import graphvisualisation.graphics.objects.DrawableNode;
 import graphvisualisation.graphics.objects.Edge;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
@@ -14,21 +14,57 @@ import java.util.ArrayList;
 
 public class Canvas extends Parent {
 
-    public static final int WIDTH = 1000, HEIGHT = 600;
+    private final double width, height;
+    /**Maximum radius among nodes that have been stored on this canvas. Includes nodes that have not been drawn.*/
+    private double maxNodeRadius = 0;
+    private final Matrix matrix;
     private final ArrayList<DrawableNode> nodes = new ArrayList<>();
     private final ArrayList<Edge> edges = new ArrayList<>();
+    private CanvasDrawer drawer;
 
-    public Canvas() throws UndefinedNodeException, InvalidEdgeException, InvalidFileException, FileNotFoundException {
-        this(DataLoader.loadFileAsMatrix());
+    public Canvas(CanvasDrawer drawer, double width, double height) throws UndefinedNodeException, InvalidEdgeException, InvalidFileException, FileNotFoundException {
+        this(drawer, width, height, new Matrix());
     }
 
-    // todo: later make list of ints instead and convert to DrawableNodes.
-    // todo: If this class is still being used later for drawing and Node objects have been made, then instead pass
-    //  Node objects into functions and remove int parameters from the code.
-    public Canvas(boolean[][] edgeMatrix) throws InvalidEdgeException, UndefinedNodeException {
+    public Canvas(CanvasDrawer drawer, double width, double height, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException {
+        this.width = width;
+        this.height = height;
+        this.matrix = matrix;
+        redraw(drawer);
+    }
 
-        PositionLogic.generateRandomCanvas(this, edgeMatrix);
+    public double width() {
+        return width;
+    }
 
+    public double height() {
+        return height;
+    }
+
+    public double maxNodeRadius() {
+        return maxNodeRadius;
+    }
+
+    /**
+     * Update the value stored for the maximum radius of nodes. The stored value is only updated if the new value is
+     * greater than it.
+     * @param radius the radius to be compared to the stored radius
+     */
+    public void updateMaxRadius(double radius) {
+        if (radius > maxNodeRadius) maxNodeRadius = radius;
+    }
+
+    public Point generatePoint() {
+        return Point.generateRandom(0, 0, width, height);
+    }
+
+    public void redraw() throws InvalidEdgeException, UndefinedNodeException {
+        drawer.drawTo(this, matrix, true);
+    }
+
+    public void redraw(CanvasDrawer drawer) throws InvalidEdgeException, UndefinedNodeException {
+        this.drawer = drawer;
+        redraw();
     }
 
     // Ignore that half this code is just doc comments
@@ -146,7 +182,7 @@ public class Canvas extends Parent {
         }
 
         // If not create one
-        DrawableNode node = new DrawableNode(nodeID);
+        DrawableNode node = new DrawableNode(this, nodeID);
         nodes.add(node);
         return node;
     }
@@ -286,6 +322,10 @@ public class Canvas extends Parent {
         return drawNodePos(nodeID, point.getX(), point.getY());
     }
 
+    /**
+     * Clear all objects visible on the canvas. Stored objects are not cleared.
+     * @see #clear()
+     */
     public void clearCanvas() {
         getChildren().removeIf(canvasObject -> canvasObject instanceof DrawableNode || canvasObject instanceof Edge);
     }
@@ -366,8 +406,13 @@ public class Canvas extends Parent {
         for (Edge edge : edges) edge.reconnect();
     }
 
+    /**
+     * Clear all stored objects (nodes and edges) and all visible nodes from the canvas.
+     * @see #clearCanvas()
+     */
     public void clear() {
         nodes.clear();
+        maxNodeRadius = 0;
         edges.clear();
         clearCanvas();
     }
