@@ -2,6 +2,7 @@ package graphvisualisation.graphics.objects;
 
 import graphvisualisation.graphics.canvas.Canvas;
 import graphvisualisation.graphics.canvas.Point;
+import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.layout.StackPane;
@@ -18,14 +19,14 @@ public class DrawableNode extends StackPane {
             FONT_SIZE = 30d,
             MIN_SPACE = Edge.Arrow.HEIGHT * 3;
 
-    private final Canvas canvas;
+    private final Graph graph;
     private final int id;
     private double xPos = 0, yPos = 0;
     private final Circle border;
     private final Text textID;
 
-    public DrawableNode(Canvas canvas, int id) {
-        this.canvas = canvas;
+    public DrawableNode(Graph graph, int id) {
+        this.graph = graph;
         this.id = id;
 
         // Create the circle used for the border around the node
@@ -44,7 +45,7 @@ public class DrawableNode extends StackPane {
 
         // Store the radius if it is larger than the largest node. This is used if the implementation requires all nodes
         // to be the same size, using matchSize()
-        canvas.updateMaxRadius(radius);
+        graph.updateMaxRadius(radius);
 
         draw();
     }
@@ -168,7 +169,7 @@ public class DrawableNode extends StackPane {
      * @param maintainCentre true if the node should keep the same centre point after resizing
      */
     public void matchSize(boolean maintainCentre) {
-        setCircleRadius(canvas.maxNodeRadius(), maintainCentre);
+        setCircleRadius(graph.maxNodeRadius(), maintainCentre);
     }
 
     /**
@@ -253,7 +254,7 @@ public class DrawableNode extends StackPane {
      * @return true if the node is within the bounds, false otherwise
      */
     public boolean isWithinCanvas() {
-        return isWithinCanvas(canvas);
+        return isWithinCanvas(graph.canvas()); // todo: ?
     }
 
     /**

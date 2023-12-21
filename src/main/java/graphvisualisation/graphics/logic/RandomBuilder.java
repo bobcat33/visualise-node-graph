@@ -2,20 +2,22 @@ package graphvisualisation.graphics.logic;
 
 import graphvisualisation.data.graph.DiMatrix;
 import graphvisualisation.data.graph.Matrix;
-import graphvisualisation.graphics.canvas.Canvas;
+import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 
-public class Randomised implements CanvasDrawer {
+public class RandomBuilder implements GraphBuilder {
 
     /**
      * Clears a canvas and populates it with randomly positioned nodes.
-     * @param canvas tbe canvas to be drawn to
+     *
      * @param edgeMatrix a directed graph matrix of the nodes and their edges
+     * @param graph
+     * @param canvas     tbe canvas to be drawn to
      */
     @Override
-    public void drawTo(Canvas canvas, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException {
-        drawTo(canvas, matrix, false);
+    public void build(Graph graph, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException {
+        build(graph, matrix, false);
     }
 
     /**
@@ -26,7 +28,7 @@ public class Randomised implements CanvasDrawer {
      *                        are sized individually based on the width of their ID text.
      */
     @Override
-    public void drawTo(Canvas canvas, Matrix matrix, boolean uniformNodeSize) throws InvalidEdgeException, UndefinedNodeException {
+    public void build(Graph graph, Matrix matrix, boolean uniformNodeSize) throws InvalidEdgeException, UndefinedNodeException {
         boolean[][] edgeMatrix = matrix.getEdgeMatrix();
         boolean isDirectional = matrix instanceof DiMatrix;
         int attempts = 0;
@@ -36,15 +38,15 @@ public class Randomised implements CanvasDrawer {
 
         while (!edgesValid && attempts < attemptLimit) {
             System.out.println("Generating canvas, attempt " + (attempts + 1));
-            canvas.clear();
+            graph.clear();
 
             // If all nodes must be created with uniform size, create them all first. Later they will just be moved
             // rather than recreated.
             if (uniformNodeSize) {
                 for (int i = 0; i < edgeMatrix.length; i++) {
-                    canvas.createNode(i);
+                    graph.createNode(i);
                 }
-                canvas.resizeNodes(true, false);
+                graph.resizeNodes(true, false);
             }
 
             // Generate or reposition the nodes to find suitable locations. If, after 1000 attempts, a node could not
@@ -55,7 +57,7 @@ public class Randomised implements CanvasDrawer {
                 // canIterate is checked afterwards so that the nodes are still positioned randomly even if they are
                 // no longer being adjusted
                 for (iterations = 0;
-                     iterations <= maxNodeMovements && !canvas.createNode(i, canvas.generatePoint()) && canIterate;
+                     iterations <= maxNodeMovements && !graph.createNode(i, graph.generatePoint()) && canIterate;
                      ++iterations) {
                     if (iterations == maxNodeMovements) {
                         System.out.println("Iterated too many times while trying to position node " + i + ", no longer repositioning any nodes.");
@@ -69,7 +71,7 @@ public class Randomised implements CanvasDrawer {
                 for (int node2 = 0; node2 < edgeMatrix.length; node2++) {
                     if (edgeMatrix[node1][node2]) {
                         System.out.println("Creating edge between " + node1 + " and " + node2);
-                        if (!canvas.createEdge(node1, node2, isDirectional)) {
+                        if (!graph.createEdge(node1, node2, isDirectional)) {
                             // todo: instead this could make automatic adjustments to the parameters, once click and drag
                             //  feature has been made - or could be best to just display "clean graph could not be found"
                             edgesValid = false;
@@ -82,6 +84,6 @@ public class Randomised implements CanvasDrawer {
 
         if (edgesValid) System.out.println("Valid graph found after " + attempts + " attempts.");
         else System.out.println("No valid graph was found within the limit of " + attemptLimit + " attempts.");
-        canvas.draw();
+        graph.draw();
     }
 }

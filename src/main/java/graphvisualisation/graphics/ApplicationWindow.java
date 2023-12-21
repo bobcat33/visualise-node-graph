@@ -2,9 +2,8 @@ package graphvisualisation.graphics;
 
 import graphvisualisation.data.graph.DiMatrix;
 import graphvisualisation.data.storage.InvalidFileException;
-import graphvisualisation.graphics.canvas.Canvas;
-import graphvisualisation.graphics.logic.ForceDirected;
-import graphvisualisation.graphics.logic.Randomised;
+import graphvisualisation.graphics.graphing.Graph;
+import graphvisualisation.graphics.logic.RandomBuilder;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.Group;
@@ -19,7 +18,7 @@ public class ApplicationWindow {
 
     public ApplicationWindow() throws InvalidEdgeException, UndefinedNodeException, InvalidFileException, FileNotFoundException {
 
-        Canvas canvas = new Canvas(new ForceDirected(), WIDTH, HEIGHT, new DiMatrix());
+        Graph canvas = new Graph(new RandomBuilder(), WIDTH, HEIGHT, new DiMatrix());
         Group root = new Group();
 
         scene = new Scene(root, WIDTH, HEIGHT);
