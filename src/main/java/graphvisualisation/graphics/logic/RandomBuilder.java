@@ -57,7 +57,7 @@ public class RandomBuilder implements GraphBuilder {
                 // canIterate is checked afterwards so that the nodes are still positioned randomly even if they are
                 // no longer being adjusted
                 for (iterations = 0;
-                     iterations <= maxNodeMovements && !graph.createNode(i, graph.generatePoint()) && canIterate;
+                     iterations <= maxNodeMovements && !graph.isValidNode(graph.createNode(i, graph.generatePoint())) && canIterate;
                      ++iterations) {
                     if (iterations == maxNodeMovements) {
                         System.out.println("Iterated too many times while trying to position node " + i + ", no longer repositioning any nodes.");

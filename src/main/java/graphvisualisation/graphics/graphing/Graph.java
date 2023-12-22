@@ -34,7 +34,7 @@ public class Graph extends Parent {
         this.width = width;
         this.height = height;
         this.matrix = matrix;
-        this.canvas = new Canvas(width, height);
+        this.canvas = new Canvas();
         getChildren().add(canvas);
         builder.build(this, matrix, uniformNodeSize);
     }
@@ -45,10 +45,6 @@ public class Graph extends Parent {
 
     public double height() {
         return height;
-    }
-
-    public Canvas canvas() {
-        return canvas;
     }
 
     public void rebuild() throws InvalidEdgeException, UndefinedNodeException {
@@ -99,7 +95,7 @@ public class Graph extends Parent {
      */
     private Edge makeEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
         // If the edge already exists return it
-        Edge newEdge = new Edge(makeNode(node1), makeNode(node2), directional);
+        Edge newEdge = new Edge(createNode(node1), createNode(node2), directional);
         for (Edge edge : edges) {
             if (edge.equals(newEdge)) return edge;
         }
@@ -174,35 +170,51 @@ public class Graph extends Parent {
         return validEdge;
     }
 
-    // todo: split makeNode into getNode and makeNode
-    /**
-     * Find or create a Node object using the parameters. Searches {@link #nodes}, then if the node does not exist a
-     * new one is created and added. This method DOES NOT add the new node to the canvas. This must be done using
-     * {@link #draw() draw} or {@link #drawNode(int) drawNode}.
-     * @param nodeID the ID of the node
-     * @return the {@code DrawableNode} created/found
-     */
-    private DrawableNode makeNode(int nodeID) {
-        // Check if node already exists
+
+    public boolean isValidNode(int nodeID) {
+        return isValidNode(getNode(nodeID));
+    }
+
+    public boolean isValidNode(DrawableNode node) {
+        return isWithinBounds(node) && node.isValidAmong(nodes);
+    }
+
+    public boolean isWithinBounds(DrawableNode node) {
+        double radius = node.getNodeRadius();
+        Point centre = node.getCentre();
+        double cx = centre.getX();
+        double cy = centre.getY();
+
+        return cx - radius >= 0 && cy - radius >= 0 && cx + radius <= width && cy + radius <= height;
+    }
+
+    public DrawableNode getNode(int nodeID) {
         for (DrawableNode searchNode : nodes) {
             if (searchNode.getNodeID() == nodeID) return searchNode;
         }
-
-        // If not create one
-        DrawableNode node = new DrawableNode(this, nodeID);
-        nodes.add(node);
-        return node;
+        return null;
     }
 
     /**
-     * Create a new node. If the node already exists this call will be ignored. This method DOES NOT add the new node
-     * to the canvas. This must be done using {@link #draw() draw} or {@link #drawNode(int) drawNode}.
-     * @param nodeID the ID of the new node
-     * @see #createNode(int, double, double)
-     * @see #createNodePos(int, double, double)
+     * Find or create a Node object. Searches {@link #nodes}, then if the node does not exist a new one is created and
+     * added. This method DOES NOT add the new node to the canvas. This must be done using {@link #draw() draw} or
+     * {@link #drawNode(int) drawNode}.
+     * @param nodeID the ID of the node
+     * @return the {@code DrawableNode} created/found
      */
-    public void createNode(int nodeID) {
-        makeNode(nodeID);
+    public DrawableNode createNode(int nodeID) {
+        // Check if node already exists
+        DrawableNode node = getNode(nodeID);
+        if (node != null) return node;
+
+        // If not create one
+        node = new DrawableNode(nodeID);
+        nodes.add(node);
+
+        // Store the radius if it is larger than the largest node. This is used if the implementation requires all nodes
+        // to be the same size, using Node#matchSize
+        updateMaxRadius(node.getNodeRadius());
+        return node;
     }
 
     /**
@@ -213,12 +225,11 @@ public class Graph extends Parent {
      * @param x x position of the centre of the new node
      * @param y y position of the centre of the new node
      * @see #createNode(int)
-     * @see #createNodePos(int, double, double)
      */
-    public boolean createNode(int nodeID, double x, double y) {
-        DrawableNode node = makeNode(nodeID);
+    public DrawableNode createNode(int nodeID, double x, double y) {
+        DrawableNode node = createNode(nodeID);
         node.setCentre(x, y);
-        return node.isValidAmong(nodes);
+        return node;
     }
 
     /**
@@ -228,39 +239,9 @@ public class Graph extends Parent {
      * @param nodeID the ID of the new node
      * @param point the centre point of the new node
      * @see #createNode(int)
-     * @see #createNodePos(int, double, double)
      */
-    public boolean createNode(int nodeID, Point point) {
+    public DrawableNode createNode(int nodeID, Point point) {
         return createNode(nodeID, point.getX(), point.getY());
-    }
-
-    /**
-     * Create a new node at a certain position. Position is the top left corner of the new node. If the node already
-     * exists it will be moved. This method DOES NOT add the new node to the canvas. This must be done using
-     * {@link #draw() draw} or {@link #drawNode(int) drawNode}.
-     * @param nodeID the ID of the new node
-     * @param x x position of the top left corner of the new node
-     * @param y y position of the top left corner of the new node
-     * @see #createNode(int)
-     * @see #createNode(int, double, double)
-     */
-    public boolean createNodePos(int nodeID, double x, double y) {
-        DrawableNode node = makeNode(nodeID);
-        node.setPosition(x, y);
-        return node.isValidAmong(nodes);
-    }
-
-    /**
-     * Create a new node at a certain position. Position is the top left corner of the new node. If the node already
-     * exists it will be moved. This method DOES NOT add the new node to the canvas. This must be done using
-     * {@link #draw() draw} or {@link #drawNode(int) drawNode}.
-     * @param nodeID the ID of the new node
-     * @param point the top left corner of the new node
-     * @see #createNode(int)
-     * @see #createNode(int, double, double)
-     */
-    public boolean createNodePos(int nodeID, Point point) {
-        return createNodePos(nodeID, point.getX(), point.getY());
     }
 
     /**
@@ -268,11 +249,11 @@ public class Graph extends Parent {
      * canvas will still be redrawn.
      * @param nodeID the ID of the new or existing node
      * @see #drawNode(int, double, double)
-     * @see #drawNodePos(int, double, double)
      */
-    public void drawNode(int nodeID) {
-        createNode(nodeID);
-        draw();
+    public DrawableNode drawNode(int nodeID) {
+        DrawableNode node = createNode(nodeID);
+        canvas.draw(node);
+        return node;
     }
 
     /**
@@ -282,12 +263,11 @@ public class Graph extends Parent {
      * @param x the new x position of the centre of the node
      * @param y the new y position of the centre of the node
      * @see #drawNode(int)
-     * @see #drawNodePos(int, double, double)
      */
-    public boolean drawNode(int nodeID, double x, double y) {
-        boolean validPosition = createNode(nodeID, x, y);
-        draw();
-        return validPosition;
+    public DrawableNode drawNode(int nodeID, double x, double y) {
+        DrawableNode node = createNode(nodeID, x, y);
+        canvas.draw(node);
+        return node;
     }
 
     /**
@@ -296,37 +276,9 @@ public class Graph extends Parent {
      * @param nodeID the ID of the new node
      * @param point the new centre of the node
      * @see #drawNode(int)
-     * @see #drawNodePos(int, double, double)
      */
-    public boolean drawNode(int nodeID, Point point) {
+    public DrawableNode drawNode(int nodeID, Point point) {
         return drawNode(nodeID, point.getX(), point.getY());
-    }
-
-    /**
-     * Create or find a node and draw it at a certain position on the canvas. Position is the top left corner of the
-     * node. If the node already exists it will be moved.
-     * @param nodeID the ID of the new node
-     * @param x the new x position of the top left corner of the node
-     * @param y the new y position of the top left corner of the node
-     * @see #drawNode(int)
-     * @see #drawNode(int, double, double)
-     */
-    public boolean drawNodePos(int nodeID, double x, double y) {
-        boolean validPosition = createNodePos(nodeID, x, y);
-        draw();
-        return validPosition;
-    }
-
-    /**
-     * Create or find a node and draw it at a certain position on the canvas. Position is the top left corner of the
-     * node. If the node already exists it will be moved.
-     * @param nodeID the ID of the new node
-     * @param point the new top left corner of the node
-     * @see #drawNode(int)
-     * @see #drawNode(int, double, double)
-     */
-    public boolean drawNodePos(int nodeID, Point point) {
-        return drawNodePos(nodeID, point.getX(), point.getY());
     }
 
     /**
@@ -335,8 +287,7 @@ public class Graph extends Parent {
      */
     public void draw() {
         canvas.clear();
-        canvas.drawNodes(nodes);
-        canvas.drawEdges(edges);
+        canvas.draw(nodes, edges);
     }
 
     /**
@@ -363,7 +314,7 @@ public class Graph extends Parent {
         boolean resized = false;
         for (DrawableNode node : nodes) {
             if (node.getNodeID() == nodeID) {
-                if (matchLargest) node.matchSize(maintainCentre);
+                if (matchLargest) node.matchSize(this, maintainCentre);
                 else node.resetSize(maintainCentre);
                 resized = true;
             }
@@ -381,7 +332,7 @@ public class Graph extends Parent {
      */
     public void resizeNodes(boolean matchLargest, boolean maintainCentre) {
         for (DrawableNode node : nodes) {
-            if (matchLargest) node.matchSize(maintainCentre);
+            if (matchLargest) node.matchSize(this, maintainCentre);
             else node.resetSize(maintainCentre);
         }
         reconnectEdges();
@@ -404,7 +355,6 @@ public class Graph extends Parent {
 
     /**
      * Clear all stored objects (nodes and edges) and all visible nodes from the canvas.
-     * @see #clearCanvas()
      */
     public void clear() {
         maxNodeRadius = 0;

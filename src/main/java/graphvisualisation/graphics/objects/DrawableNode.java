@@ -1,6 +1,5 @@
 package graphvisualisation.graphics.objects;
 
-import graphvisualisation.graphics.canvas.Canvas;
 import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
@@ -18,15 +17,12 @@ public class DrawableNode extends StackPane {
             BORDER_WIDTH = 2d,
             FONT_SIZE = 30d,
             MIN_SPACE = Edge.Arrow.HEIGHT * 3;
-
-    private final Graph graph;
     private final int id;
     private double xPos = 0, yPos = 0;
     private final Circle border;
     private final Text textID;
 
-    public DrawableNode(Graph graph, int id) {
-        this.graph = graph;
+    public DrawableNode(int id) {
         this.id = id;
 
         // Create the circle used for the border around the node
@@ -42,10 +38,6 @@ public class DrawableNode extends StackPane {
         // Define the radius of the border circle using the size of the text and NODE_PADDING
         double radius = getBaseRadius();
         border.setRadius(radius);
-
-        // Store the radius if it is larger than the largest node. This is used if the implementation requires all nodes
-        // to be the same size, using matchSize()
-        graph.updateMaxRadius(radius);
 
         draw();
     }
@@ -158,18 +150,10 @@ public class DrawableNode extends StackPane {
 
     /**
      * Resize the node based on the largest current node.
-     * @see #matchSize(boolean)
-     */
-    public void matchSize() {
-        matchSize(false);
-    }
-
-    /**
-     * Resize the node based on the largest current node.
      * @param maintainCentre true if the node should keep the same centre point after resizing
      */
-    public void matchSize(boolean maintainCentre) {
-        setCircleRadius(graph.maxNodeRadius(), maintainCentre);
+    public void matchSize(Graph graph, boolean maintainCentre) {
+        setNodeRadius(graph.maxNodeRadius(), maintainCentre);
     }
 
     /**
@@ -198,6 +182,14 @@ public class DrawableNode extends StackPane {
         border.setRadius(radius);
         if (maintainCentre) setCentre(centre);
         draw();
+    }
+
+    private void setNodeRadius(double radius) {
+        setNodeRadius(radius, false);
+    }
+
+    private void setNodeRadius(double radius, boolean maintainCentre) {
+        setCircleRadius(radius - BORDER_WIDTH, maintainCentre);
     }
 
     /**
@@ -250,28 +242,6 @@ public class DrawableNode extends StackPane {
     }
 
     /**
-     * Check that this node is within the bounds of its canvas.
-     * @return true if the node is within the bounds, false otherwise
-     */
-    public boolean isWithinCanvas() {
-        return isWithinCanvas(graph.canvas()); // todo: ?
-    }
-
-    /**
-     * Check that this node is within the bounds of the specified canvas.
-     * @param canvas the canvas to compare this nodes position to
-     * @return true if the node is within the bounds, false otherwise
-     */
-    public boolean isWithinCanvas(Canvas canvas) {
-        double radius = getNodeRadius();
-        Point centre = getCentre();
-        double cx = centre.getX();
-        double cy = centre.getY();
-
-        return cx - radius >= 0 && cy - radius >= 0 && cx + radius <= canvas.width() && cy + radius <= canvas.height();
-    }
-
-    /**
      * Check if this node is valid among a set of nodes, i.e. no part of the node falls outside its canvas bounds, it
      * doesn't overlap or touch any of the nodes, and it is at least the {@link #MIN_SPACE minimum distance} from any
      * other node. This method does not compare equal nodes against each other.
@@ -279,8 +249,6 @@ public class DrawableNode extends StackPane {
      * @return true if the node is valid, false otherwise
      */
     public boolean isValidAmong(ArrayList<DrawableNode> nodes) {
-        if (!isWithinCanvas()) return false;
-
         for (DrawableNode node : nodes) {
             if (!this.equals(node))
                 if (distanceBetween(node) <= MIN_SPACE)

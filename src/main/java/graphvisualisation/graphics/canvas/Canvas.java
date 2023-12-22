@@ -2,8 +2,6 @@ package graphvisualisation.graphics.canvas;
 
 import graphvisualisation.graphics.objects.DrawableNode;
 import graphvisualisation.graphics.objects.Edge;
-import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
-import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 
@@ -11,25 +9,9 @@ import java.util.ArrayList;
 
 public class Canvas extends Parent {
 
-    private final double width, height;
-
-    public Canvas(double width, double height) throws InvalidEdgeException, UndefinedNodeException {
-        this.width = width;
-        this.height = height;
-    }
-
-    public double width() {
-        return width;
-    }
-
-    public double height() {
-        return height;
-    }
-
     public void clear() {
         getChildren().removeIf(canvasObject -> canvasObject instanceof DrawableNode || canvasObject instanceof Edge);
     }
-
 
     public boolean exists(DrawableNode node) {
         for (Node child : getChildren())
@@ -63,6 +45,11 @@ public class Canvas extends Parent {
 
     public void drawEdges(ArrayList<Edge> edges) {
         for (Edge edge : edges) draw(edge);
+    }
+
+    public void draw(ArrayList<DrawableNode> nodes, ArrayList<Edge> edges) {
+        drawNodes(nodes);
+        drawEdges(edges);
     }
 
     public boolean remove(DrawableNode node) {
