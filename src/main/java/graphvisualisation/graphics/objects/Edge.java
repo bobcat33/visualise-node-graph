@@ -13,6 +13,8 @@ import javafx.scene.shape.StrokeLineCap;
 import java.util.ArrayList;
 
 public class Edge extends Parent {
+    // todo: add system for making edges double ended rather than creating two edges, this would be to prevent overlapping
+    //  lines over the arrows for bi-directional edges
     public static final Color LINE_COLOUR = Color.BLACK;
 
     private final DrawableNode startNode;
@@ -27,8 +29,8 @@ public class Edge extends Parent {
 
     public Edge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
         // Ensure that both the start node and the end node are defined correctly
-        if (startNode.isUndefined()) throw new UndefinedNodeException(startNode);
-        if (endNode.isUndefined()) throw new UndefinedNodeException(endNode);
+        if (startNode == null || startNode.isUndefined()) throw new UndefinedNodeException(startNode);
+        if (endNode == null || endNode.isUndefined()) throw new UndefinedNodeException(endNode);
         // Make sure the start and end nodes are different
         if (startNode.equals(endNode))
             throw new InvalidEdgeException(startNode, endNode);
@@ -47,6 +49,12 @@ public class Edge extends Parent {
             arrow = new Arrow();
             getChildren().add(arrow);
         }
+    }
+
+    // todo: possible split to allow changing stroke and fill
+    public void setColour(Color colour) {
+        edgeLine.setStroke(colour);
+        arrow.setFill(colour);
     }
 
     // todo: ensure that this method is always called when nodes are moved/resized
@@ -138,12 +146,8 @@ public class Edge extends Parent {
         return endNode;
     }
 
-    private Point getVector(Point point1, Point point2) {
-        return new Point(point2.getX() - point1.getX(), point2.getY() - point1.getY());
-    }
-
     private Point getNormalisedLineVector() {
-        return getVector(startNode.getCentre(), endNode.getCentre()).normalize();
+        return startNode.getCentre().getVectorTo(endNode.getCentre()).normalize();
     }
 
     /**
@@ -171,6 +175,9 @@ public class Edge extends Parent {
 
         private Arrow() {
             connectToNode();
+            setStrokeWidth(0); // todo: for some reason some arrows overlap and enter into the node circles,
+                               //  currently doesn't happen when stroke width is 0 but the cause should be discovered
+            setFill(LINE_COLOUR);
         }
 
         /**
@@ -191,7 +198,7 @@ public class Edge extends Parent {
 
             Point u = getNormalisedLineVector();
 
-            Point endPoint = endNode.getCentre().sub(u.multiply(endNode.getCircleRadius()));
+            Point endPoint = endNode.getCentre().sub(u.multiply(endNode.getNodeRadius()));
             Point base = endPoint.sub(u.multiply(HEIGHT));
             Point uBase = new Point(u.getY(), -u.getX());
             Point vBase = uBase.multiply(WIDTH/2);
@@ -206,7 +213,6 @@ public class Edge extends Parent {
             this.getPoints().add(left.getY());
             this.getPoints().add(right.getX());
             this.getPoints().add(right.getY());
-            setFill(LINE_COLOUR);
         }
 
     }
@@ -237,13 +243,15 @@ public class Edge extends Parent {
             Point startCentre = startNode.getCentre();
             Point endCentre = endNode.getCentre();
 
-            double startRadius = startNode.getCircleRadius();
-            double endRadius = endNode.getCircleRadius();
+            double startRadius = startNode.getNodeRadius();
+            double endRadius = endNode.getNodeRadius();
 
             Point u = getNormalisedLineVector();
 
             Point start = startCentre.add(u.multiply(startRadius));
             Point end = endCentre.sub(u.multiply(endRadius));
+
+            if (directed) end = end.sub(u.multiply(Arrow.HEIGHT));
 
             setPosition(start, end);
         }
@@ -308,6 +316,7 @@ public class Edge extends Parent {
      * <ul>
      *     <li>a -> b == a -> b&nbsp; = &nbsp;true</li>
      *     <li>a -> b == b -> a&nbsp; = &nbsp;false</li>
+     *     <li>a -> b == a --- b&nbsp; = &nbsp;false</li>
      *     <li>a --- b == a --- b&nbsp; = &nbsp;true</li>
      *     <li>a --- b == b --- a&nbsp; = &nbsp;true</li>
      * </ul>

@@ -78,4 +78,20 @@ public class Point extends Point2D {
 
         return Math.sqrt((xDifference * xDifference) + (yDifference * yDifference));
     }
+
+    public Point getVectorTo(Point point) {
+        return getVectorBetween(this, point);
+    }
+
+    public static Point getVectorBetween(Point point1, Point point2) {
+        return new Point(point2.getX() - point1.getX(), point2.getY() - point1.getY());
+    }
+
+    public Point add(double v) {
+        return new Point(getX() + v, getY() + v);
+    }
+
+    public Point sub(double v) {
+        return new Point(getX() - v, getY() + v);
+    }
 }

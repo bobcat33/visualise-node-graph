@@ -13,7 +13,7 @@ import javafx.scene.text.Text;
 import java.util.ArrayList;
 
 public class DrawableNode extends StackPane {
-    public static final double NODE_PADDING = 30d,
+    public static final double NODE_PADDING = 20d,
             BORDER_WIDTH = 2d,
             FONT_SIZE = 30d,
             MIN_SPACE = Edge.Arrow.HEIGHT * 3;
@@ -40,6 +40,10 @@ public class DrawableNode extends StackPane {
         border.setRadius(radius);
 
         draw();
+    }
+
+    public Point getPos() {
+        return new Point(xPos, yPos);
     }
 
     /**
@@ -80,7 +84,7 @@ public class DrawableNode extends StackPane {
      * @see #getCircleRadius()
      */
     public double getNodeRadius() {
-        return getCircleRadius() + BORDER_WIDTH;
+        return getCircleRadius() + BORDER_WIDTH/2;
     }
 
     /**
@@ -189,7 +193,7 @@ public class DrawableNode extends StackPane {
     }
 
     private void setNodeRadius(double radius, boolean maintainCentre) {
-        setCircleRadius(radius - BORDER_WIDTH, maintainCentre);
+        setCircleRadius(radius - BORDER_WIDTH/2, maintainCentre);
     }
 
     /**
@@ -213,6 +217,11 @@ public class DrawableNode extends StackPane {
         double r2 = node.getNodeRadius();
 
         return distance - (r1 + r2);
+    }
+
+    public Point getEdgePointTowards(DrawableNode node) {
+        Point centre = getCentre();
+        return centre.add(centre.getVectorTo(node.getCentre()).normalize().multiply(getNodeRadius()));
     }
 
     /**
@@ -310,6 +319,8 @@ public class DrawableNode extends StackPane {
         if (!(o instanceof DrawableNode node)) return false;
         boolean sameID = id == node.id;
         // todo need to decide if samePosition will be required when comparing
+        // todo could also store the relevant graph/graphID that the node is drawn to so that no DrawableNode can be used
+        //  on a different graph
         boolean samePosition = xPos == node.xPos && yPos == node.yPos;
         return sameID/* && samePosition*/;
     }

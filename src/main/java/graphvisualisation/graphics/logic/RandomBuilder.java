@@ -71,7 +71,7 @@ public class RandomBuilder implements GraphBuilder {
                 for (int node2 = 0; node2 < edgeMatrix.length; node2++) {
                     if (edgeMatrix[node1][node2]) {
                         System.out.println("Creating edge between " + node1 + " and " + node2);
-                        if (!graph.createEdge(node1, node2, isDirectional)) {
+                        if (graph.intersectsAnyNode(graph.createEdge(node1, node2, isDirectional))) {
                             // todo: instead this could make automatic adjustments to the parameters, once click and drag
                             //  feature has been made - or could be best to just display "clean graph could not be found"
                             edgesValid = false;

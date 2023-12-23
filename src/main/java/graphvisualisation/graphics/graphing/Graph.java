@@ -26,6 +26,8 @@ public class Graph extends Parent {
     /**Maximum radius among nodes that have been stored on this canvas. Includes nodes that have not been drawn.*/
     private double maxNodeRadius = 0;
 
+    // todo: nodeID parameters should later be replaced by Node objects so that DrawableNodes can be created with Nodes
+    //  that may contain values, nodes should be created with a unique "name" that the user sees, then backend IDs
     public Graph(GraphBuilder builder, double width, double height) throws InvalidFileException, FileNotFoundException, InvalidEdgeException, UndefinedNodeException {
         this(builder, width, height, new Matrix());
     }
@@ -69,40 +71,40 @@ public class Graph extends Parent {
      * greater than it.
      * @param radius the radius to be compared to the stored radius
      */
-    public void updateMaxRadius(double radius) {
+    public void updateMaxRadius(DrawableNode node) {
+        double radius = node.getNodeRadius();
         if (radius > maxNodeRadius) maxNodeRadius = radius;
     }
 
-    // Ignore that half this code is just doc comments
+    public boolean intersectsAnyNode(Edge edge) {
+        return edge.intersectsAnyOf(nodes);
+    }
 
-    // todo: currently all edge creation methods allow the creation of nodes if they do not already exist, this does
-    //  does not account for the position of the nodes. these methods should either disallow the creation of nodes or
-    //  have different methods for giving position of the nodes on either end of the line.
+    public boolean areConnected(DrawableNode node1, DrawableNode node2) {
+        for (Edge edge : edges) {
+            if (edge.involves(node1.getNodeID()) && edge.involves(node2.getNodeID())) return true;
+        }
+        return false;
+    }
 
-    // todo: split makeEdge into getEdge and makeEdge
-    /**
-     * Find or create an Edge object using the parameters. This also creates the node objects required if they do not
-     * already exist. All new nodes are created using {@link #makeNode(int)}. If the edge does not already exist
-     * then a new one is created and added to the {@link #edges} array. This method DOES NOT add edges or nodes
-     * to the canvas. This must be done using {@link #draw() draw} or {@link #drawEdge(int, int, boolean) drawEdge}.
-     * @param node1 the ID of the first node
-     * @param node2 the ID of the second node
-     * @param directional whether the edge is directed or not
-     * @return the edge found or the edge created
-     * @throws InvalidEdgeException if the edge is invalid
-     * @throws UndefinedNodeException if either of the nodes are not defined. This can be thrown if the nodes have already
-     * been created and stored in {@link #nodes} but have not been properly defined
-     */
-    private Edge makeEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
-        // If the edge already exists return it
-        Edge newEdge = new Edge(createNode(node1), createNode(node2), directional);
+    public Edge getEdge(int node1, int node2, boolean directed) {
+        Edge newEdge;
+
+        DrawableNode n1 = getNode(node1);
+        DrawableNode n2 = getNode(node2);
+        if (n1 == null || n2 == null) return null;
+
+        try {
+            newEdge = new Edge(n1, n2, directed);
+        } catch (InvalidEdgeException | UndefinedNodeException e) {
+            return null;
+        }
+
         for (Edge edge : edges) {
             if (edge.equals(newEdge)) return edge;
         }
 
-        // Otherwise store and return the new edge
-        edges.add(newEdge);
-        return newEdge;
+        return null;
     }
 
     /**
@@ -117,7 +119,7 @@ public class Graph extends Parent {
      * been created but have not been properly defined
      * @see #createEdge(int, int, boolean)
      */
-    public boolean createEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
+    public Edge createEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
         return createEdge(node1, node2, false);
     }
 
@@ -128,20 +130,27 @@ public class Graph extends Parent {
      * If the edge already exists then this call is ignored.
      * @param node1 the ID of the first node
      * @param node2 the ID of the second node
-     * @param directional whether the new edge is directional or not
+     * @param directed whether the new edge is directed or not
      * @throws InvalidEdgeException if the new edge is invalid
      * @throws UndefinedNodeException if either of the nodes are not defined. This can be thrown if the nodes have already
      * been created but have not been properly defined
      * @see #createEdge(int, int)
      */
-    public boolean createEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
-        return !makeEdge(node1, node2, directional).intersectsAnyOf(nodes);
+    public Edge createEdge(int node1, int node2, boolean directed) throws InvalidEdgeException, UndefinedNodeException {
+        // If the edge already exists return it
+        Edge edge = getEdge(node1, node2, directed);
+        if (edge != null) return edge;
+
+        // Otherwise create a new edge, then store it and return it
+        edge = new Edge(getNode(node1), getNode(node2), directed);
+//        edge.setColour(Color.RED);
+        edges.add(edge);
+        return edge;
     }
 
     /**
      * Simultaneously create and draw a new undirected edge on the canvas. Edge created using
      * {@link #createEdge(int, int)} then drawn using {@link #draw()}.
-     * <br/>todo: create a private method to draw the specific line instead of using draw() to redraw all elements
      * @param node1 the ID of the first node
      * @param node2 the ID of the second node
      * @throws InvalidEdgeException if the new edge is invalid
@@ -149,7 +158,7 @@ public class Graph extends Parent {
      * been created but have not been properly defined
      * @see #drawEdge(int, int, boolean)
      */
-    public boolean drawEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
+    public Edge drawEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
         return drawEdge(node1, node2, false);
     }
 
@@ -164,10 +173,10 @@ public class Graph extends Parent {
      * been created but have not been properly defined
      * @see #drawEdge(int, int)
      */
-    public boolean drawEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
-        boolean validEdge = createEdge(node1, node2, directional);
-        draw(); // todo: rewrite to not require draw call, instead only find the specific edge
-        return validEdge;
+    public Edge drawEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
+        Edge edge = createEdge(node1, node2, directional);
+        canvas.draw(edge);
+        return edge;
     }
 
 
@@ -213,7 +222,7 @@ public class Graph extends Parent {
 
         // Store the radius if it is larger than the largest node. This is used if the implementation requires all nodes
         // to be the same size, using Node#matchSize
-        updateMaxRadius(node.getNodeRadius());
+        updateMaxRadius(node);
         return node;
     }
 
@@ -301,6 +310,27 @@ public class Graph extends Parent {
         resizeNodes(true, true);
     }
 
+    public void moveNode(int nodeID, Point point) throws UndefinedNodeException {
+        moveNode(nodeID, point.getX(), point.getY());
+    }
+
+    public void moveNode(int nodeID, double x, double y) throws UndefinedNodeException {
+        DrawableNode node = getNode(nodeID);
+
+        if (node == null) throw new UndefinedNodeException(null);
+
+        moveNode(node, x, y);
+    }
+
+    public void moveNode(DrawableNode node, Point point) {
+        moveNode(node, point.getX(), point.getY());
+    }
+
+    public void moveNode(DrawableNode node, double x, double y) {
+        node.setCentre(x, y);
+        reconnectEdgesOf(node);
+    }
+
     /**
      * Resize a specific node. All edges involving this node will be reconnected automatically.
      * @param nodeID the ID of the node
@@ -336,6 +366,10 @@ public class Graph extends Parent {
             else node.resetSize(maintainCentre);
         }
         reconnectEdges();
+    }
+
+    private void reconnectEdgesOf(DrawableNode node) {
+        reconnectEdgesOf(node.getNodeID());
     }
 
     /**
