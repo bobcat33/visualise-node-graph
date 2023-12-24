@@ -5,7 +5,6 @@ import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.Parent;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeLineCap;
@@ -148,25 +147,6 @@ public class Edge extends Parent {
 
     private Point getNormalisedLineVector() {
         return startNode.getCentre().getVectorTo(endNode.getCentre()).normalize();
-    }
-
-    /**
-     * Dot was used to test to make sure certain points were in the right places
-     * @deprecated useless :)
-     */
-    public class Dot extends Circle {
-        public static final double RADIUS = 10;
-        public static final Color colour = Color.RED;
-
-        private Dot(Point point) {
-
-            setRadius(RADIUS);
-            setCenterX(point.getX());
-            setCenterY(point.getY());
-            setFill(colour);
-
-        }
-
     }
 
     public class Arrow extends Polygon {

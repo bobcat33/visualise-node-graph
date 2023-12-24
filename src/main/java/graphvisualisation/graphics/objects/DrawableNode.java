@@ -220,8 +220,16 @@ public class DrawableNode extends StackPane {
     }
 
     public Point getEdgePointTowards(DrawableNode node) {
+        return getEdgePointTowards(node.getCentre());
+    }
+
+    public Point getEdgePointTowards(Point point) {
         Point centre = getCentre();
-        return centre.add(centre.getVectorTo(node.getCentre()).normalize().multiply(getNodeRadius()));
+        return centre.add(centre.getVectorTo(point).normalize().multiply(getNodeRadius()));
+    }
+
+    public Point getEdgePointTowards(double x, double y) {
+        return getEdgePointTowards(new Point(x, y));
     }
 
     /**

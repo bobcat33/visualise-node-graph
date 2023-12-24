@@ -16,14 +16,23 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 
 public class ForceDirectedBuilder implements GraphBuilder {
-    private final double repulsionConstant = 400d;
-    private final double springConstant = 2.0d;
-    private final double ideaEdgeLength = DrawableNode.MIN_SPACE * 3;
-    private final double epsilon = 0.001d;
-    private final double cooling = 0.9999d;
+    private final double repulsionConstant = 10000d; // todo: make scalable based on node size and idealEdgeLength
+    private final double springConstant = 1d; // todo: make scalable based on idealEdgeLength
+    private final double idealEdgeLength = DrawableNode.MIN_SPACE * 3;
+    private final double epsilon = 0.05d; // todo: probably make scalable based on repulsionConstant
+    private final double cooling = 0.99999d;
     private final int maxIterations = 1000000000;
-    private final int frameDuration = 10;
+    private final int frameDuration = 1;
 
+    private final boolean animated;
+
+    public ForceDirectedBuilder() {
+        this(false);
+    }
+
+    public ForceDirectedBuilder(boolean animated) {
+        this.animated = animated;
+    }
 
     @Override
     public void build(Graph graph, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException {
@@ -32,24 +41,26 @@ public class ForceDirectedBuilder implements GraphBuilder {
 
     @Override
     public void build(Graph graph, Matrix matrix, boolean uniformNodeSize) throws InvalidEdgeException, UndefinedNodeException {
+        graph.clear();
+
+        System.out.println("Placing nodes.");
 
         ArrayList<DrawableNode> nodes = buildInitialGraph(graph, matrix, uniformNodeSize);
 
-        int t = 0;
+        System.out.println("Applying forces.");
 
-        System.out.println("Starting forces.");
+        if (animated) {
+            Timeline timeline = new Timeline();
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(frameDuration), new Frame(graph, nodes, timeline)));
+            timeline.setCycleCount(maxIterations);
+            timeline.play();
+        }
 
-//        double forces = 0;
-//        while (t++ < maxIterations && (forces = applyForces(graph, nodes, t)) > epsilon) {}
-
-        Timeline timeline = new Timeline();
-        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(frameDuration), new Frame(graph, nodes, timeline)));
-        timeline.setCycleCount(maxIterations);
-        timeline.play();
-
-//        System.out.println("Forces applied.");
-//        System.out.println("Iterations used: " + t);
-//        System.out.println("Force: " + forces);
+        else {
+            int t = 0;
+            while (t++ < maxIterations && applyForces(graph, nodes, t) > epsilon) {}
+            System.out.println("Forces applied.");
+        }
 
     }
 
@@ -73,7 +84,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
             for (int iterations = 0;
                  canRepositionNodes && iterations <= maxNodeMovements && !graph.isWithinBounds(node);
                  ++iterations) {
-                graph.moveNode(node, graph.generatePoint());
+                graph.moveNode(node, graph.generatePoint(), false);
                 if (iterations == maxNodeMovements) {
                     System.out.println("Iterated too many times while trying to position node " + node.getNodeID() + ", no longer repositioning any nodes.");
                     canRepositionNodes = false;
@@ -118,30 +129,25 @@ public class ForceDirectedBuilder implements GraphBuilder {
         Point start = node1.getCentre();
         Point end = node2.getCentre();
 
-        double distance = start.distanceTo(end);
+        double distance = end.distanceTo(start);
 
-        return start.getVectorTo(end).normalize().multiply(repulsionConstant/(distance*distance));
+        return end.getVectorTo(start).normalize().multiply(repulsionConstant/(distance*distance));
     }
 
     private Point calcSpring(DrawableNode node1, DrawableNode node2) {
         Point start = node1.getCentre();
         Point end = node2.getCentre();
 
-        double distance = start.distanceTo(end) / ideaEdgeLength;
+        double distance = end.distanceTo(start) / idealEdgeLength;
         double logDistance = Math.log(distance);
 
 
         return start.getVectorTo(end).normalize().multiply(springConstant * logDistance);
     }
 
-    private Point calcAttraction(Point spring, Point repulsion) {
-        return spring.sub(repulsion);
-    }
-
     private Point calcForce(DrawableNode node1, DrawableNode node2, boolean connected) {
-        Point repulsion = calcRepulsion(node1, node2);
-        if (connected) return calcAttraction(calcSpring(node1, node2), repulsion).add(repulsion);
-        return repulsion;
+        if (connected) return calcSpring(node1, node2);
+        return calcRepulsion(node1, node2);
     }
 
     private double calcCooling(double iteration) {
@@ -149,8 +155,10 @@ public class ForceDirectedBuilder implements GraphBuilder {
     }
 
     private double moveNode(Graph graph, DrawableNode node, Point vector) {
-        graph.moveNode(node, node.getCentre().add(vector));
-        return vector.magnitude();
+        Point start = node.getCentre();
+        graph.moveNode(node, node.getCentre().add(vector), true);
+        Point end = node.getCentre();
+        return start.getVectorTo(end).magnitude();
     }
 
     private class Frame implements EventHandler<ActionEvent> {

@@ -4,6 +4,7 @@ import graphvisualisation.graphics.objects.DrawableNode;
 import graphvisualisation.graphics.objects.Edge;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.shape.Shape;
 
 import java.util.ArrayList;
 
@@ -72,5 +73,12 @@ public class Canvas extends Parent {
     public void remove(Edge[] edges) {
         for (Edge edge : edges)
             remove(edge);
+    }
+
+    /**
+     * @deprecated used for testing
+     */
+    public void draw(Shape shape) {
+        getChildren().add(shape);
     }
 }

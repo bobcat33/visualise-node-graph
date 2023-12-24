@@ -94,4 +94,15 @@ public class Point extends Point2D {
     public Point sub(double v) {
         return new Point(getX() - v, getY() + v);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Point point)) return false;
+        return this.getX() == point.getX() && this.getY() == point.getY();
+    }
+
+    public boolean equals(double x, double y) {
+        return getX() == x && getY() == y;
+    }
 }

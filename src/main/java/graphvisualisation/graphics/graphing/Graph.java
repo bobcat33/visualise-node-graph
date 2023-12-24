@@ -5,6 +5,7 @@ import graphvisualisation.data.storage.InvalidFileException;
 import graphvisualisation.graphics.canvas.Canvas;
 import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.logic.GraphBuilder;
+import graphvisualisation.graphics.objects.Dot;
 import graphvisualisation.graphics.objects.DrawableNode;
 import graphvisualisation.graphics.objects.Edge;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
@@ -310,24 +311,57 @@ public class Graph extends Parent {
         resizeNodes(true, true);
     }
 
-    public void moveNode(int nodeID, Point point) throws UndefinedNodeException {
-        moveNode(nodeID, point.getX(), point.getY());
+    public void moveNode(int nodeID, Point point, boolean withinBounds) throws UndefinedNodeException {
+        moveNode(nodeID, point.getX(), point.getY(), withinBounds);
     }
 
-    public void moveNode(int nodeID, double x, double y) throws UndefinedNodeException {
+    public void moveNode(int nodeID, double x, double y, boolean withinBounds) throws UndefinedNodeException {
         DrawableNode node = getNode(nodeID);
 
         if (node == null) throw new UndefinedNodeException(null);
 
-        moveNode(node, x, y);
+        moveNode(node, x, y, withinBounds);
     }
 
-    public void moveNode(DrawableNode node, Point point) {
-        moveNode(node, point.getX(), point.getY());
+    public void moveNode(DrawableNode node, Point point, boolean withinBounds) {
+        moveNode(node, point.getX(), point.getY(), withinBounds);
     }
 
-    public void moveNode(DrawableNode node, double x, double y) {
+    public void moveNode(DrawableNode node, double x, double y, boolean withinBounds) {
         node.setCentre(x, y);
+
+        // If the node must be kept within the bounds of the graph then find if it crosses any of the edges and
+        // reposition appropriately
+        if (withinBounds) {
+            boolean moved = false;
+
+            // If node crosses the top of the bounds
+            if (y <= 0 || node.getEdgePointTowards(x, 0).getY() <= 0) {
+                y = node.getNodeRadius();
+                moved = true;
+            }
+            // If node crosses the bottom of the bounds
+            else if (y >= height || node.getEdgePointTowards(x, height).getY() >= height) {
+                y = height - node.getNodeRadius();
+                moved = true;
+            }
+            // If node crosses the left of the bounds
+            if (x <= 0 || node.getEdgePointTowards(0, y).getX() <= 0) {
+                x = node.getNodeRadius();
+                moved = true;
+            }
+            // If node crosses the right of the bounds
+            else if (x >= width || node.getEdgePointTowards(width, y).getX() >= width) {
+                x = width - node.getNodeRadius();
+                moved = true;
+            }
+
+            // If the node was found to cross any bounds, move it to the new position within bounds
+            if (moved) {
+                node.setCentre(x, y);
+            }
+        }
+
         reconnectEdgesOf(node);
     }
 
@@ -395,5 +429,19 @@ public class Graph extends Parent {
         nodes.clear();
         edges.clear();
         canvas.clear();
+    }
+
+    /**
+     * @deprecated used for testing
+     */
+    public void drawDot(double x, double y) {
+        canvas.draw(new Dot(x, y));
+    }
+
+    /**
+     * @deprecated used for testing
+     */
+    public void drawDot(Point point) {
+        drawDot(point.getX(), point.getY());
     }
 }
