@@ -1,18 +1,29 @@
 package graphvisualisation.data.graph;
 
+import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.data.storage.DataLoader;
 import graphvisualisation.data.storage.InvalidFileException;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 
 public class Matrix {
+    private final ArrayList<Node> nodes;
     private final boolean[][] edgeMatrix;
 
     public Matrix() throws InvalidFileException, FileNotFoundException {
-        edgeMatrix = DataLoader.loadFileAsMatrix();
+        nodes = DataLoader.loadNodes();
+        edgeMatrix = DataLoader.loadEdges(nodes);
+    }
+
+    public Matrix(ArrayList<Node> nodes, boolean[][] edgeMatrix) {
+        this.nodes = nodes;
+        this.edgeMatrix = edgeMatrix;
+    }
+
+    public ArrayList<Node> getNodes() {
+        return nodes;
     }
 
     public int nNodes() {
@@ -21,30 +32,6 @@ public class Matrix {
 
     public boolean[][] getEdgeMatrix() {
         return edgeMatrix;
-    }
-
-    public int[] getConnectedNodes(int node) {
-        // todo: Using hashset here is likely to create overhead, could be improved in the future for efficiency
-        HashSet<Integer> connectedNodesSet = new HashSet<>();
-
-        // Find all nodes connected to the node passed in
-        for (int x = 0; x < edgeMatrix.length; x++) {
-            for (int y = 0; y < edgeMatrix[x].length; y++) {
-                if ((x == node || y == node) && edgeMatrix[x][y]) {
-                    if (x == node) connectedNodesSet.add(y);
-                    else connectedNodesSet.add(x);
-                }
-            }
-        }
-
-        // Convert the set to an int array
-        Integer[] connectedNodes = new Integer[connectedNodesSet.size()];
-        connectedNodesSet.toArray(connectedNodes);
-
-        int[] nodes = new int[connectedNodes.length];
-        for (int i = 0; i < connectedNodes.length; i++) {nodes[i] = connectedNodes[i];}
-
-        return nodes;
     }
 
     /**
@@ -74,5 +61,4 @@ public class Matrix {
         }
 
     }
-
 }

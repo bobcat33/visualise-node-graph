@@ -1,5 +1,6 @@
 package graphvisualisation.graphics.objects;
 
+import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
@@ -16,30 +17,38 @@ public class DrawableNode extends StackPane {
     public static final double NODE_PADDING = 20d,
             BORDER_WIDTH = 2d,
             FONT_SIZE = 30d,
-            MIN_SPACE = Edge.Arrow.HEIGHT * 3;
+            MIN_SPACE = DrawableEdge.Arrow.HEIGHT * 3;
+    private final Graph graph;
     private final int id;
+    private final String name;
     private double xPos = 0, yPos = 0;
-    private final Circle border;
-    private final Text textID;
+    protected final Circle border;
+    protected final Text textID;
 
-    public DrawableNode(int id) {
+    public DrawableNode(Graph graph, Node node) {
+        this(graph, node.id(), node.name());
+    }
+
+    public DrawableNode(Graph graph, int id, String name) {
+        this.graph = graph;
         this.id = id;
+        this.name = name;
 
         // Create the circle used for the border around the node
         border = new Circle();
-        border.setFill(null);
+        border.setFill(Color.WHITE);
         border.setStrokeWidth(BORDER_WIDTH);
         border.setStroke(Color.BLACK);
 
         // Create the text object that displays the ID of the node
-        textID = new Text(Integer.toString(id));
+        textID = new Text(name);
         textID.setFont(new Font(FONT_SIZE));
 
         // Define the radius of the border circle using the size of the text and NODE_PADDING
         double radius = getBaseRadius();
         border.setRadius(radius);
 
-        draw();
+        getChildren().addAll(border, textID);
     }
 
     public Point getPos() {
@@ -61,6 +70,9 @@ public class DrawableNode extends StackPane {
      */
     public int getNodeID() {
         return id;
+    }
+    public String getName() {
+        return name;
     }
 
     /**
@@ -107,7 +119,6 @@ public class DrawableNode extends StackPane {
         yPos = y;
         setLayoutX(x);
         setLayoutY(y);
-        draw();
     }
 
     /**
@@ -140,16 +151,6 @@ public class DrawableNode extends StackPane {
     public Point getCentre() {
         double nodeCentre = getNodeRadius();
         return new Point(xPos + nodeCentre, yPos + nodeCentre);
-    }
-
-    // todo: figure out how to remove this completely
-    /**
-     * Clear and repopulate the graphic elements stored.
-     * @implNote mostly useless
-     */
-    private void draw() {
-        getChildren().clear();
-        getChildren().addAll(border, textID);
     }
 
     /**
@@ -185,7 +186,6 @@ public class DrawableNode extends StackPane {
         Point centre = getCentre();
         border.setRadius(radius);
         if (maintainCentre) setCentre(centre);
-        draw();
     }
 
     private void setNodeRadius(double radius) {
@@ -277,27 +277,27 @@ public class DrawableNode extends StackPane {
     /**
      * Create a new edge between this node and the other node.
      * @param node the node to create an edge from this node to
-     * @return the {@link Edge} created
+     * @return the {@link DrawableEdge} created
      * @throws UndefinedNodeException if either of the nodes are undefined
      * @throws InvalidEdgeException if the edge would be invalid
      * @see #connectNode(DrawableNode, boolean)
      */
-    public Edge connectNode(DrawableNode node) throws UndefinedNodeException, InvalidEdgeException {
-        return new Edge(this, node);
+    public DrawableEdge connectNode(DrawableNode node) throws UndefinedNodeException, InvalidEdgeException {
+        return new DrawableEdge(this, node);
     }
 
     /**
      * Create a new directional edge between this node and the other node.
      * @param node the node to create an edge with
      * @param successor whether the node is a successor or a predecessor
-     * @return the {@link Edge} created
+     * @return the {@link DrawableEdge} created
      * @throws UndefinedNodeException if either of the nodes are undefined
      * @throws InvalidEdgeException if the edge would be invalid
      * @see #connectNode(DrawableNode)
      */
-    public Edge connectNode(DrawableNode node, boolean successor) throws UndefinedNodeException, InvalidEdgeException {
-        if (successor) return new Edge(this, node, true);
-        return new Edge(node, this, true);
+    public DrawableEdge connectNode(DrawableNode node, boolean successor) throws UndefinedNodeException, InvalidEdgeException {
+        if (successor) return new DrawableEdge(this, node, true);
+        return new DrawableEdge(node, this, true);
     }
 
     /**
@@ -326,10 +326,11 @@ public class DrawableNode extends StackPane {
         if (o == this) return true;
         if (!(o instanceof DrawableNode node)) return false;
         boolean sameID = id == node.id;
+        boolean sameGraph = graph.equals(node.graph);
         // todo need to decide if samePosition will be required when comparing
         // todo could also store the relevant graph/graphID that the node is drawn to so that no DrawableNode can be used
         //  on a different graph
         boolean samePosition = xPos == node.xPos && yPos == node.yPos;
-        return sameID/* && samePosition*/;
+        return sameID && sameGraph/* && samePosition*/;
     }
 }

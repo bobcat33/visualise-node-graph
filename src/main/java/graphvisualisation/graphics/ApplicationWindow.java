@@ -1,7 +1,6 @@
 package graphvisualisation.graphics;
 
-import graphvisualisation.data.graph.DiMatrix;
-import graphvisualisation.data.graph.Matrix;
+import graphvisualisation.data.storage.DataLoader;
 import graphvisualisation.data.storage.InvalidFileException;
 import graphvisualisation.graphics.graphing.ForceDirectedGraph;
 import graphvisualisation.graphics.graphing.Graph;
@@ -20,8 +19,8 @@ public class ApplicationWindow {
 
     public ApplicationWindow() throws InvalidEdgeException, UndefinedNodeException, InvalidFileException, FileNotFoundException {
 
-//        Graph graph = new Graph(new RandomBuilder(), WIDTH, HEIGHT, new DiMatrix());
-        ForceDirectedGraph graph = new ForceDirectedGraph(WIDTH, HEIGHT, new DiMatrix());
+//        Graph graph = new Graph(new RandomBuilder(), WIDTH, HEIGHT, DataLoader.loadDiMatrix());
+        ForceDirectedGraph graph = new ForceDirectedGraph(WIDTH, HEIGHT, DataLoader.loadDiMatrix());
         Group root = new Group();
 
         scene = new Scene(root, WIDTH, HEIGHT);

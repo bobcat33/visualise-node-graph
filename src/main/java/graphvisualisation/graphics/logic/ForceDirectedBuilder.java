@@ -2,6 +2,7 @@ package graphvisualisation.graphics.logic;
 
 import graphvisualisation.data.graph.DiMatrix;
 import graphvisualisation.data.graph.Matrix;
+import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.objects.DrawableNode;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 public class ForceDirectedBuilder implements GraphBuilder {
     private final double repulsionConstant = 10000d; // todo: make scalable based on node size and idealEdgeLength
     private final double springConstant = 1d; // todo: make scalable based on idealEdgeLength
-    private final double idealEdgeLength = DrawableNode.MIN_SPACE * 3;
+    private final double idealEdgeLength = DrawableNode.MIN_SPACE * 5; // todo: scale based on node size? or graph size
     private final double epsilon = 0.05d; // todo: probably make scalable based on repulsionConstant
     private final double cooling = 0.99999d;
     private final int maxIterations = 1000000000;
@@ -72,8 +73,8 @@ public class ForceDirectedBuilder implements GraphBuilder {
         ArrayList<DrawableNode> nodes = new ArrayList<>();
 
         // Create the nodes at random positions around the graph
-        for (int nodeID = 0; nodeID < edgeMatrix.length; nodeID++) {
-            nodes.add(graph.drawNode(nodeID, graph.generatePoint()));
+        for (Node node : matrix.getNodes()) {
+            nodes.add(graph.drawNode(node, graph.generatePoint()));
         }
 
         if (uniformNodeSize) graph.resizeNodes(true, true);

@@ -11,9 +11,9 @@ import javafx.scene.shape.StrokeLineCap;
 
 import java.util.ArrayList;
 
-public class Edge extends Parent {
+public class DrawableEdge extends Parent {
     // todo: add system for making edges double ended rather than creating two edges, this would be to prevent overlapping
-    //  lines over the arrows for bi-directional edges
+    //  lines over the arrows for bi-directional edges and allow for highlighting certain directions when weighted
     public static final Color LINE_COLOUR = Color.BLACK;
 
     private final DrawableNode startNode;
@@ -22,11 +22,11 @@ public class Edge extends Parent {
     private final EdgeLine edgeLine;
     private Arrow arrow;
 
-    public Edge(DrawableNode startNode, DrawableNode endNode) throws UndefinedNodeException, InvalidEdgeException {
+    public DrawableEdge(DrawableNode startNode, DrawableNode endNode) throws UndefinedNodeException, InvalidEdgeException {
         this(startNode, endNode, false);
     }
 
-    public Edge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
+    public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
         // Ensure that both the start node and the end node are defined correctly
         if (startNode == null || startNode.isUndefined()) throw new UndefinedNodeException(startNode);
         if (endNode == null || endNode.isUndefined()) throw new UndefinedNodeException(endNode);
@@ -289,7 +289,7 @@ public class Edge extends Parent {
     }
 
     /**
-     * Compares this edge with the specified object. The argument must not be null and must be an {@code Edge} object.
+     * Compares this edge with the specified object. The argument must not be null and must be an {@code DrawableEdge} object.
      * To return true they must both have same edge type (directed/undirected) and if directed then the start and
      * end nodes must be the same, if undirected then the start and end nodes must either be the same or opposing.
      * <br/>The rules are as follows:
@@ -302,12 +302,12 @@ public class Edge extends Parent {
      * </ul>
      * Where -> denotes a directed edge (left to right) and --- denotes an undirected edge.
      * @param o the object to compare this edge against
-     * @return true if the given object represents an {@code Edge} equivalent to this edge, false otherwise
+     * @return true if the given object represents an {@code DrawableEdge} equivalent to this edge, false otherwise
      */
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof Edge edge)) return false;
+        if (!(o instanceof DrawableEdge edge)) return false;
         boolean sameEdgeType = directed == edge.directed;
         boolean sameStartEnd = startNode.equals(edge.startNode) && endNode.equals(edge.endNode);
         boolean oppositeStartEnd = startNode.equals(edge.endNode) && endNode.equals(edge.startNode);

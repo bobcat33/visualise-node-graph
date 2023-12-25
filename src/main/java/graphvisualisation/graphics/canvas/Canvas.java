@@ -1,7 +1,8 @@
 package graphvisualisation.graphics.canvas;
 
+import graphvisualisation.graphics.objects.DrawableEdge;
 import graphvisualisation.graphics.objects.DrawableNode;
-import graphvisualisation.graphics.objects.Edge;
+import graphvisualisation.graphics.objects.WeightedDrawableNode;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.shape.Shape;
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 public class Canvas extends Parent {
 
     public void clear() {
-        getChildren().removeIf(canvasObject -> canvasObject instanceof DrawableNode || canvasObject instanceof Edge);
+        getChildren().clear();
     }
 
     public boolean exists(DrawableNode node) {
@@ -21,16 +22,47 @@ public class Canvas extends Parent {
         return false;
     }
 
-    public boolean exists(Edge edge) {
+    public boolean exists(DrawableEdge edge) {
         for (Node node : getChildren())
-            if (node instanceof Edge existingEdge)
+            if (node instanceof DrawableEdge existingEdge)
                 if (existingEdge.equals(edge)) return true;
         return false;
+    }
+
+    public void resetZIndex() {
+
+        ArrayList<DrawableNode> nodes = new ArrayList<>();
+        ArrayList<DrawableEdge> edges = new ArrayList<>();
+        ArrayList<WeightedDrawableNode.Weight> weights = new ArrayList<>();
+
+        for (Node child : getChildren()) {
+            if (child instanceof DrawableNode node) {
+                nodes.add(node);
+            }
+            if (child instanceof DrawableEdge edge) {
+                edges.add(edge);
+            }
+            if (child instanceof WeightedDrawableNode.Weight weight) {
+                weights.add(weight);
+            }
+        }
+
+        getChildren().clear();
+        for (DrawableNode node : nodes) {
+            getChildren().add(node);
+        }
+        for (DrawableEdge edge : edges) {
+            getChildren().add(edge);
+        }
+        for (WeightedDrawableNode.Weight weight : weights) {
+            getChildren().add(weight);
+        }
     }
 
     public boolean draw(DrawableNode node) {
         boolean nodeExists = exists(node);
         if (!nodeExists) getChildren().add(node);
+        resetZIndex();
         return !nodeExists;
     }
 
@@ -38,19 +70,25 @@ public class Canvas extends Parent {
         for (DrawableNode node : nodes) draw(node);
     }
 
-    public boolean draw(Edge edge) {
+    public boolean draw(DrawableEdge edge) {
         boolean edgeExists = exists(edge);
         if (!edgeExists) getChildren().add(edge);
+        resetZIndex();
         return !edgeExists;
     }
 
-    public void drawEdges(ArrayList<Edge> edges) {
-        for (Edge edge : edges) draw(edge);
+    public void drawEdges(ArrayList<DrawableEdge> edges) {
+        for (DrawableEdge edge : edges) draw(edge);
     }
 
-    public void draw(ArrayList<DrawableNode> nodes, ArrayList<Edge> edges) {
+    public void draw(ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges) {
         drawNodes(nodes);
         drawEdges(edges);
+    }
+
+    public void draw(WeightedDrawableNode.Weight weight) {
+        getChildren().add(weight);
+        resetZIndex();
     }
 
     public boolean remove(DrawableNode node) {
@@ -64,14 +102,14 @@ public class Canvas extends Parent {
             remove(node);
     }
 
-    public boolean remove(Edge edge) {
+    public boolean remove(DrawableEdge edge) {
         int numFound = 0;
         while (getChildren().remove(edge)) {numFound++;}
         return numFound > 0;
     }
 
-    public void remove(Edge[] edges) {
-        for (Edge edge : edges)
+    public void remove(DrawableEdge[] edges) {
+        for (DrawableEdge edge : edges)
             remove(edge);
     }
 

@@ -2,9 +2,12 @@ package graphvisualisation.graphics.logic;
 
 import graphvisualisation.data.graph.DiMatrix;
 import graphvisualisation.data.graph.Matrix;
+import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
+
+import java.util.ArrayList;
 
 public class RandomBuilder implements GraphBuilder {
 
@@ -29,6 +32,7 @@ public class RandomBuilder implements GraphBuilder {
      */
     @Override
     public void build(Graph graph, Matrix matrix, boolean uniformNodeSize) throws InvalidEdgeException, UndefinedNodeException {
+        ArrayList<Node> nodes = matrix.getNodes();
         boolean[][] edgeMatrix = matrix.getEdgeMatrix();
         boolean isDirectional = matrix instanceof DiMatrix;
         int attempts = 0;
@@ -43,8 +47,8 @@ public class RandomBuilder implements GraphBuilder {
             // If all nodes must be created with uniform size, create them all first. Later they will just be moved
             // rather than recreated.
             if (uniformNodeSize) {
-                for (int i = 0; i < edgeMatrix.length; i++) {
-                    graph.createNode(i);
+                for (Node node : nodes) {
+                    graph.createNode(node);
                 }
                 graph.resizeNodes(true, false);
             }
@@ -53,14 +57,14 @@ public class RandomBuilder implements GraphBuilder {
             // be properly positioned it is easiest to assume that there is no valid position to move any new nodes to.
             boolean canIterate = true;
             int iterations;
-            for (int i = 0; i < edgeMatrix.length; i++) {
+            for (Node node : nodes) {
                 // canIterate is checked afterwards so that the nodes are still positioned randomly even if they are
                 // no longer being adjusted
                 for (iterations = 0;
-                     iterations <= maxNodeMovements && !graph.isValidNode(graph.createNode(i, graph.generatePoint())) && canIterate;
+                     iterations <= maxNodeMovements && !graph.isValidNode(graph.createNode(node, graph.generatePoint())) && canIterate;
                      ++iterations) {
                     if (iterations == maxNodeMovements) {
-                        System.out.println("Iterated too many times while trying to position node " + i + ", no longer repositioning any nodes.");
+                        System.out.println("Iterated too many times while trying to position node " + node.name() + ", no longer repositioning any nodes.");
                         canIterate = false;
                     }
                 }

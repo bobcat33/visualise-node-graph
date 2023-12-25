@@ -1,13 +1,17 @@
 package graphvisualisation.graphics.graphing;
 
 import graphvisualisation.data.graph.Matrix;
+import graphvisualisation.data.graph.elements.Node;
+import graphvisualisation.data.graph.elements.WeightedNode;
+import graphvisualisation.data.storage.DataLoader;
 import graphvisualisation.data.storage.InvalidFileException;
 import graphvisualisation.graphics.canvas.Canvas;
 import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.logic.GraphBuilder;
 import graphvisualisation.graphics.objects.Dot;
+import graphvisualisation.graphics.objects.DrawableEdge;
 import graphvisualisation.graphics.objects.DrawableNode;
-import graphvisualisation.graphics.objects.Edge;
+import graphvisualisation.graphics.objects.WeightedDrawableNode;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.Parent;
@@ -22,7 +26,7 @@ public class Graph extends Parent {
     private final Canvas canvas;
     private GraphBuilder builder;
     private final ArrayList<DrawableNode> nodes = new ArrayList<>();
-    private final ArrayList<Edge> edges = new ArrayList<>();
+    private final ArrayList<DrawableEdge> edges = new ArrayList<>();
 
     /**Maximum radius among nodes that have been stored on this canvas. Includes nodes that have not been drawn.*/
     private double maxNodeRadius = 0;
@@ -30,7 +34,7 @@ public class Graph extends Parent {
     // todo: nodeID parameters should later be replaced by Node objects so that DrawableNodes can be created with Nodes
     //  that may contain values, nodes should be created with a unique "name" that the user sees, then backend IDs
     public Graph(GraphBuilder builder, double width, double height) throws InvalidFileException, FileNotFoundException, InvalidEdgeException, UndefinedNodeException {
-        this(builder, width, height, new Matrix());
+        this(builder, width, height, DataLoader.loadMatrix());
     }
 
     public Graph(GraphBuilder builder, double width, double height, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException {
@@ -77,31 +81,31 @@ public class Graph extends Parent {
         if (radius > maxNodeRadius) maxNodeRadius = radius;
     }
 
-    public boolean intersectsAnyNode(Edge edge) {
+    public boolean intersectsAnyNode(DrawableEdge edge) {
         return edge.intersectsAnyOf(nodes);
     }
 
     public boolean areConnected(DrawableNode node1, DrawableNode node2) {
-        for (Edge edge : edges) {
+        for (DrawableEdge edge : edges) {
             if (edge.involves(node1.getNodeID()) && edge.involves(node2.getNodeID())) return true;
         }
         return false;
     }
 
-    public Edge getEdge(int node1, int node2, boolean directed) {
-        Edge newEdge;
+    public DrawableEdge getEdge(int node1, int node2, boolean directed) {
+        DrawableEdge newEdge;
 
         DrawableNode n1 = getNode(node1);
         DrawableNode n2 = getNode(node2);
         if (n1 == null || n2 == null) return null;
 
         try {
-            newEdge = new Edge(n1, n2, directed);
+            newEdge = new DrawableEdge(n1, n2, directed);
         } catch (InvalidEdgeException | UndefinedNodeException e) {
             return null;
         }
 
-        for (Edge edge : edges) {
+        for (DrawableEdge edge : edges) {
             if (edge.equals(newEdge)) return edge;
         }
 
@@ -120,7 +124,7 @@ public class Graph extends Parent {
      * been created but have not been properly defined
      * @see #createEdge(int, int, boolean)
      */
-    public Edge createEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
+    public DrawableEdge createEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
         return createEdge(node1, node2, false);
     }
 
@@ -137,13 +141,13 @@ public class Graph extends Parent {
      * been created but have not been properly defined
      * @see #createEdge(int, int)
      */
-    public Edge createEdge(int node1, int node2, boolean directed) throws InvalidEdgeException, UndefinedNodeException {
+    public DrawableEdge createEdge(int node1, int node2, boolean directed) throws InvalidEdgeException, UndefinedNodeException {
         // If the edge already exists return it
-        Edge edge = getEdge(node1, node2, directed);
+        DrawableEdge edge = getEdge(node1, node2, directed);
         if (edge != null) return edge;
 
         // Otherwise create a new edge, then store it and return it
-        edge = new Edge(getNode(node1), getNode(node2), directed);
+        edge = new DrawableEdge(getNode(node1), getNode(node2), directed);
 //        edge.setColour(Color.RED);
         edges.add(edge);
         return edge;
@@ -159,7 +163,7 @@ public class Graph extends Parent {
      * been created but have not been properly defined
      * @see #drawEdge(int, int, boolean)
      */
-    public Edge drawEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
+    public DrawableEdge drawEdge(int node1, int node2) throws InvalidEdgeException, UndefinedNodeException {
         return drawEdge(node1, node2, false);
     }
 
@@ -174,8 +178,8 @@ public class Graph extends Parent {
      * been created but have not been properly defined
      * @see #drawEdge(int, int)
      */
-    public Edge drawEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
-        Edge edge = createEdge(node1, node2, directional);
+    public DrawableEdge drawEdge(int node1, int node2, boolean directional) throws InvalidEdgeException, UndefinedNodeException {
+        DrawableEdge edge = createEdge(node1, node2, directional);
         canvas.draw(edge);
         return edge;
     }
@@ -212,19 +216,20 @@ public class Graph extends Parent {
      * @param nodeID the ID of the node
      * @return the {@code DrawableNode} created/found
      */
-    public DrawableNode createNode(int nodeID) {
+    public DrawableNode createNode(Node node) {
         // Check if node already exists
-        DrawableNode node = getNode(nodeID);
-        if (node != null) return node;
+        DrawableNode drawableNode = getNode(node.id());
+        if (drawableNode != null) return drawableNode;
 
         // If not create one
-        node = new DrawableNode(nodeID);
-        nodes.add(node);
+        if (node instanceof WeightedNode weightedNode) drawableNode = new WeightedDrawableNode(this, weightedNode);
+        else drawableNode = new DrawableNode(this, node);
+        nodes.add(drawableNode);
 
         // Store the radius if it is larger than the largest node. This is used if the implementation requires all nodes
         // to be the same size, using Node#matchSize
-        updateMaxRadius(node);
-        return node;
+        updateMaxRadius(drawableNode);
+        return drawableNode;
     }
 
     /**
@@ -236,10 +241,10 @@ public class Graph extends Parent {
      * @param y y position of the centre of the new node
      * @see #createNode(int)
      */
-    public DrawableNode createNode(int nodeID, double x, double y) {
-        DrawableNode node = createNode(nodeID);
-        node.setCentre(x, y);
-        return node;
+    public DrawableNode createNode(Node node, double x, double y) {
+        DrawableNode drawableNode = createNode(node);
+        drawableNode.setCentre(x, y);
+        return drawableNode;
     }
 
     /**
@@ -250,8 +255,19 @@ public class Graph extends Parent {
      * @param point the centre point of the new node
      * @see #createNode(int)
      */
-    public DrawableNode createNode(int nodeID, Point point) {
-        return createNode(nodeID, point.getX(), point.getY());
+    public DrawableNode createNode(Node node, Point point) {
+        return createNode(node, point.getX(), point.getY());
+    }
+
+    private void ensureNodeIsStored(DrawableNode node) {
+        boolean stored = false;
+        for (DrawableNode storedNode : nodes) {
+            if (node.equals(storedNode)) {
+                stored = true;
+                break;
+            }
+        }
+        if (!stored) nodes.add(node);
     }
 
     /**
@@ -260,8 +276,16 @@ public class Graph extends Parent {
      * @param nodeID the ID of the new or existing node
      * @see #drawNode(int, double, double)
      */
-    public DrawableNode drawNode(int nodeID) {
-        DrawableNode node = createNode(nodeID);
+    public DrawableNode redrawNode(int nodeID) {
+        return drawNode(getNode(nodeID));
+    }
+
+    public DrawableNode drawNode(Node node) {
+        return drawNode(createNode(node));
+    }
+
+    private DrawableNode drawNode(DrawableNode node) {
+        ensureNodeIsStored(node);
         canvas.draw(node);
         return node;
     }
@@ -274,8 +298,17 @@ public class Graph extends Parent {
      * @param y the new y position of the centre of the node
      * @see #drawNode(int)
      */
-    public DrawableNode drawNode(int nodeID, double x, double y) {
-        DrawableNode node = createNode(nodeID, x, y);
+    public DrawableNode redrawNode(int nodeID, double x, double y) {
+        return drawNode(getNode(nodeID));
+    }
+
+    public DrawableNode drawNode(Node node, double x, double y) {
+        return drawNode(createNode(node), x, y);
+    }
+
+    private DrawableNode drawNode(DrawableNode node, double x, double y) {
+        ensureNodeIsStored(node);
+        node.setCentre(x, y);
         canvas.draw(node);
         return node;
     }
@@ -287,8 +320,16 @@ public class Graph extends Parent {
      * @param point the new centre of the node
      * @see #drawNode(int)
      */
-    public DrawableNode drawNode(int nodeID, Point point) {
-        return drawNode(nodeID, point.getX(), point.getY());
+    public DrawableNode redrawNode(int nodeID, Point point) {
+        return redrawNode(nodeID, point.getX(), point.getY());
+    }
+
+    public DrawableNode drawNode(Node node, Point point) {
+        return drawNode(node, point.getX(), point.getY());
+    }
+
+    private DrawableNode drawNode(DrawableNode node, Point point) {
+        return drawNode(node, point.getX(), point.getY());
     }
 
     /**
@@ -411,14 +452,14 @@ public class Graph extends Parent {
      * @param nodeID the ID of the node
      */
     private void reconnectEdgesOf(int nodeID) {
-        for (Edge edge : edges) if (edge.involves(nodeID)) edge.reconnect();
+        for (DrawableEdge edge : edges) if (edge.involves(nodeID)) edge.reconnect();
     }
 
     /**
      * Reconnect all edges to their nodes.
      */
     private void reconnectEdges() {
-        for (Edge edge : edges) edge.reconnect();
+        for (DrawableEdge edge : edges) edge.reconnect();
     }
 
     /**
@@ -429,6 +470,10 @@ public class Graph extends Parent {
         nodes.clear();
         edges.clear();
         canvas.clear();
+    }
+
+    public void addNodeWeight(WeightedDrawableNode.Weight weight) {
+        canvas.draw(weight);
     }
 
     /**
@@ -444,4 +489,6 @@ public class Graph extends Parent {
     public void drawDot(Point point) {
         drawDot(point.getX(), point.getY());
     }
+
+    // todo: make equals
 }

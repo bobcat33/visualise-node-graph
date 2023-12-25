@@ -11,10 +11,10 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 
-        new DiMatrix().print();
-        System.out.println();
-        new DiAdjList().print();
-        System.out.println();
+//        new DiMatrix().print();
+//        System.out.println();
+//        new DiAdjList().print();
+//        System.out.println();
 
         stage.setResizable(false);
 

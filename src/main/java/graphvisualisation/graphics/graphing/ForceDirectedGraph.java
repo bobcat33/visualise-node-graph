@@ -11,10 +11,10 @@ import java.io.FileNotFoundException;
 public class ForceDirectedGraph extends Graph {
 
     public ForceDirectedGraph(double width, double height) throws InvalidFileException, FileNotFoundException, InvalidEdgeException, UndefinedNodeException {
-        super(new ForceDirectedBuilder(), width, height);
+        super(new ForceDirectedBuilder(true), width, height);
     }
 
     public ForceDirectedGraph(double width, double height, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException {
-        super(new ForceDirectedBuilder(), width, height, matrix);
+        super(new ForceDirectedBuilder(true), width, height, matrix);
     }
 }
