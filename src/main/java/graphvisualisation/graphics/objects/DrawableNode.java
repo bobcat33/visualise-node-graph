@@ -101,20 +101,17 @@ public class DrawableNode extends StackPane {
 
     /**
      * Set the position of the node, defines the top left corner co-ordinates.
-     * @see #setPosition(double, double)
+     * @see #setOrigin(double, double)
      */
-    public void setPosition(Point point) {
-        setPosition(point.getX(), point.getY());
+    public void setOrigin(Point point) {
+        setOrigin(point.getX(), point.getY());
     }
 
-    // todo: might be ideal to remove the position element from the node completely as ultimately the centre is
-    //  most useful. There could still be get and set position but instead should be renamed to be more specific.
-    //  Centre methods can then be renamed to remove the word centre - thus making the code cleaner
     /**
      * Set the position of the node, defines the top left corner co-ordinates.
-     * @see #setPosition(Point)
+     * @see #setOrigin(Point)
      */
-    public void setPosition(double x, double y) {
+    public void setOrigin(double x, double y) {
         xPos = x;
         yPos = y;
         setLayoutX(x);
@@ -124,7 +121,7 @@ public class DrawableNode extends StackPane {
     /**
      * Get the position of the node's top left corner.
      */
-    public Point getPosition() {
+    public Point getOrigin() {
         return new Point(xPos, yPos);
     }
 
@@ -142,7 +139,7 @@ public class DrawableNode extends StackPane {
      */
     public void setCentre(double x, double y) {
         double nodeCentre = getNodeRadius();
-        setPosition(x - nodeCentre, y - nodeCentre);
+        setOrigin(x - nodeCentre, y - nodeCentre);
     }
 
     /**
@@ -311,7 +308,7 @@ public class DrawableNode extends StackPane {
                 + "\nNode Radius: " + getNodeRadius()
                 + "\nWidth: " + getNodeRadius()*2
                 + "\nCentre: ("  + getCentre().getX() + ", " + getCentre().getY() + ")"
-                + "\nOrigin: ("  + getPosition().getX() + ", " + getPosition().getY() + ")"
+                + "\nOrigin: ("  + getOrigin().getX() + ", " + getOrigin().getY() + ")"
         );
     }
 
@@ -328,8 +325,6 @@ public class DrawableNode extends StackPane {
         boolean sameID = id == node.id;
         boolean sameGraph = graph.equals(node.graph);
         // todo need to decide if samePosition will be required when comparing
-        // todo could also store the relevant graph/graphID that the node is drawn to so that no DrawableNode can be used
-        //  on a different graph
         boolean samePosition = xPos == node.xPos && yPos == node.yPos;
         return sameID && sameGraph/* && samePosition*/;
     }

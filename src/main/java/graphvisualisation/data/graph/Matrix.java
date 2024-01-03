@@ -27,7 +27,7 @@ public class Matrix {
     }
 
     public int nNodes() {
-        return edgeMatrix.length;
+        return nodes.size();
     }
 
     public boolean[][] getEdgeMatrix() {

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class ForceDirectedBuilder implements GraphBuilder {
     private final double repulsionConstant = 10000d; // todo: make scalable based on node size and idealEdgeLength
     private final double springConstant = 1d; // todo: make scalable based on idealEdgeLength
-    private final double idealEdgeLength = DrawableNode.MIN_SPACE * 5; // todo: scale based on node size? or graph size
+    private final double idealEdgeLength = DrawableNode.MIN_SPACE * 3; // todo: scale based on node size? or graph size
     private final double epsilon = 0.05d; // todo: probably make scalable based on repulsionConstant
     private final double cooling = 0.99999d;
     private final int maxIterations = 1000000000;
