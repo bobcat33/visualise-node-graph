@@ -1,29 +1,32 @@
 package graphvisualisation.data.graph.elements;
 
+import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
+
 public class Edge {
 
-    private final Node node1;
-    private final Node node2;
+    private final Node startNode;
+    private final Node endNode;
     private final boolean directed;
 
-    public Edge(Node node1, Node node2, boolean directed) {
+    public Edge(Node startNode, Node endNode, boolean directed) throws InvalidEdgeException {
+        // Ensure that the nodes are different
+        if (startNode.equals(endNode))
+            throw new InvalidEdgeException(startNode, endNode);
 
-        this.node1 = node1;
-        this.node2 = node2;
+        this.startNode = startNode;
+        this.endNode = endNode;
         this.directed = directed;
-
     }
 
     public Node startNode() {
-        return node1;
+        return startNode;
     }
 
     public Node endNode() {
-        return node2;
+        return endNode;
     }
 
     public boolean directed() {
         return directed;
     }
-
 }

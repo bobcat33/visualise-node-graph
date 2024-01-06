@@ -1,7 +1,7 @@
 package graphvisualisation.graphics.objects;
 
-import graphvisualisation.data.graph.elements.WeightedNode;
-import graphvisualisation.graphics.graphing.Graph;
+import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
+import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.layout.StackPane;
@@ -10,24 +10,23 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
-public class WeightedDrawableNode extends DrawableNode {
+public class WeightedDrawableEdge extends DrawableEdge {
     public static final double
-            WEIGHTED_CONTENT_BORDER_WIDTH = BORDER_WIDTH,
+            WEIGHTED_CONTENT_BORDER_WIDTH = DrawableNode.BORDER_WIDTH,
             WEIGHTED_CONTENT_PADDING = 30d,
-            WEIGHTED_CONTENT_FONT_SIZE = FONT_SIZE/2;
+            WEIGHTED_CONTENT_FONT_SIZE = DrawableNode.FONT_SIZE/2;
 
     private final String value;
     private final Weight weight;
 
-    public WeightedDrawableNode(Graph graph, WeightedNode node) {
-        super(graph, node);
-        this.value = node.value();
+    public WeightedDrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed, String value) throws InvalidEdgeException, UndefinedNodeException {
+        super(startNode, endNode, directed);
+        this.value = value;
 
         this.weight = new Weight(this);
+        System.out.println("New weight created with value: " + value);
 
-        border.hoverProperty().addListener(new HoverListener(this, weight));
-
-        textID.hoverProperty().addListener(new HoverListener(this, weight));
+        hoverProperty().addListener(new HoverListener(this, weight));
     }
 
     public String value() {
@@ -39,9 +38,9 @@ public class WeightedDrawableNode extends DrawableNode {
     }
 
     public class Weight extends StackPane {
-        private final WeightedDrawableNode node;
-        private Weight(WeightedDrawableNode node) {
-            this.node = node;
+        private final WeightedDrawableEdge edge;
+        private Weight(WeightedDrawableEdge edge) {
+            this.edge = edge;
 
             setVisible(false);
 
@@ -59,7 +58,7 @@ public class WeightedDrawableNode extends DrawableNode {
             textBorder.setStroke(Color.BLACK);
             textBorder.setStrokeWidth(WEIGHTED_CONTENT_BORDER_WIDTH);
 
-            hoverProperty().addListener(new HoverListener(node, this));
+            hoverProperty().addListener(new HoverListener(edge, this));
 
             getChildren().addAll(textBorder, text);
         }
@@ -68,22 +67,23 @@ public class WeightedDrawableNode extends DrawableNode {
             return value;
         }
 
-        public WeightedDrawableNode node() {
-            return node;
+        public WeightedDrawableEdge edge() {
+            return edge;
         }
 
         @Override
         public boolean equals(Object o) {
             if (o == null) return false;
-            if (o instanceof WeightedDrawableNode compareNode) return node.equals(compareNode);
-            if (o instanceof Weight nodeWeight) return node.equals(nodeWeight.node);
+            if (o instanceof WeightedDrawableEdge compareEdge) return edge.equals(compareEdge);
+            if (o instanceof Weight edgeWeight) return edge.equals(edgeWeight.edge);
             return false;
         }
     }
 
-    private record HoverListener(WeightedDrawableNode node, Weight weight) implements ChangeListener<Boolean> {
+    private record HoverListener(WeightedDrawableEdge edge, Weight weight) implements ChangeListener<Boolean> {
         @Override
         public void changed(ObservableValue<? extends Boolean> ignored1, Boolean ignored2, Boolean isHovered) {
+
             weight.setVisible(isHovered);
         }
     }

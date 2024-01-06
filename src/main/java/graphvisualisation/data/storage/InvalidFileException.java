@@ -10,4 +10,6 @@ public class InvalidFileException extends Exception {
         super("File contains invalid properties at line " + line + ".");
     }
 
+    // todo: add reason
+
 }

@@ -1,13 +1,9 @@
 package graphvisualisation.graphics.logic;
 
-import graphvisualisation.data.graph.DiMatrix;
-import graphvisualisation.data.graph.Matrix;
-import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.graphing.Graph;
+import graphvisualisation.graphics.objects.DrawableEdge;
 import graphvisualisation.graphics.objects.DrawableNode;
-import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
-import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -36,17 +32,12 @@ public class ForceDirectedBuilder implements GraphBuilder {
     }
 
     @Override
-    public void build(Graph graph, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException {
-        build(graph, matrix, false);
-    }
-
-    @Override
-    public void build(Graph graph, Matrix matrix, boolean uniformNodeSize) throws InvalidEdgeException, UndefinedNodeException {
+    public void build(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges) {
         graph.clear();
 
         System.out.println("Placing nodes.");
 
-        ArrayList<DrawableNode> nodes = buildInitialGraph(graph, matrix, uniformNodeSize);
+        buildInitialGraph(graph, nodes, edges);
 
         System.out.println("Applying forces.");
 
@@ -65,42 +56,19 @@ public class ForceDirectedBuilder implements GraphBuilder {
 
     }
 
-    private ArrayList<DrawableNode> buildInitialGraph(Graph graph, Matrix matrix, boolean uniformNodeSize) throws InvalidEdgeException, UndefinedNodeException {
-        boolean[][] edgeMatrix = matrix.getEdgeMatrix();
-        boolean directed = matrix instanceof DiMatrix;
-        int maxNodeMovements = 1000;
-
-        ArrayList<DrawableNode> nodes = new ArrayList<>();
+    private void buildInitialGraph(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges) {
 
         // Create the nodes at random positions around the graph
-        for (Node node : matrix.getNodes()) {
-            nodes.add(graph.drawNode(node, graph.generatePoint()));
-        }
-
-        if (uniformNodeSize) graph.resizeNodes(true, true);
-
-        // Ensure that all nodes are on the canvas and don't clip the canvas borders
-        boolean canRepositionNodes = true;
         for (DrawableNode node : nodes) {
-            for (int iterations = 0;
-                 canRepositionNodes && iterations <= maxNodeMovements && !graph.isWithinBounds(node);
-                 ++iterations) {
-                graph.moveNode(node, graph.generatePoint(), false);
-                if (iterations == maxNodeMovements) {
-                    System.out.println("Iterated too many times while trying to position node " + node.getNodeID() + ", no longer repositioning any nodes.");
-                    canRepositionNodes = false;
-                }
-            }
+            node.draw();
+            node.moveWithinBoundsTo(graph.generatePoint());
         }
 
+        graph.resizeNodes(true, true);
 
-        for (int x = 0; x < edgeMatrix.length; x++) {
-            for (int y = 0; y < edgeMatrix[x].length; y++) {
-                if (edgeMatrix[x][y]) graph.drawEdge(x, y, directed);
-            }
+        for (DrawableEdge edge : edges) {
+            edge.draw();
         }
-
-        return nodes;
     }
 
     private double applyForces(Graph graph, ArrayList<DrawableNode> nodes, int iteration) {
@@ -119,7 +87,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
 
         double maxMove = 0;
         for (int nodeID = 0; nodeID < forces.size(); nodeID++) {
-            double amountMoved = moveNode(graph, nodes.get(nodeID), forces.get(nodeID).multiply(calcCooling(iteration)));
+            double amountMoved = moveNode(nodes.get(nodeID), forces.get(nodeID).multiply(calcCooling(iteration)));
             if (amountMoved > maxMove) maxMove = amountMoved;
         }
 
@@ -155,9 +123,9 @@ public class ForceDirectedBuilder implements GraphBuilder {
         return Math.pow(cooling, iteration);
     }
 
-    private double moveNode(Graph graph, DrawableNode node, Point vector) {
+    private double moveNode(DrawableNode node, Point vector) {
         Point start = node.getCentre();
-        graph.moveNode(node, node.getCentre().add(vector), true);
+        node.moveWithinBoundsTo(node.getCentre().add(vector));
         Point end = node.getCentre();
         return start.getVectorTo(end).magnitude();
     }

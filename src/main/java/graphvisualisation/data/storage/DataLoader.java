@@ -1,9 +1,11 @@
 package graphvisualisation.data.storage;
 
-import graphvisualisation.data.graph.DiMatrix;
 import graphvisualisation.data.graph.Matrix;
+import graphvisualisation.data.graph.elements.Edge;
 import graphvisualisation.data.graph.elements.Node;
+import graphvisualisation.data.graph.elements.WeightedEdge;
 import graphvisualisation.data.graph.elements.WeightedNode;
+import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,7 +17,7 @@ import java.util.Scanner;
 public class DataLoader {
     private static final File nodeFile = new File("src/main/java/graphvisualisation/data/storage/Nodes.txt");
     private static final File edgeFile = new File("src/main/java/graphvisualisation/data/storage/Edges.txt");
-    private static final String delimiter = ";";
+    private static final String baseDelimiter = ";";
 
     public static int getNumberOfNodes() throws FileNotFoundException, InvalidFileException {
 
@@ -27,7 +29,7 @@ public class DataLoader {
         int lineNum = 0;
         while (fileScanner.hasNextLine()) {
 
-            String[] line = fileScanner.nextLine().split(delimiter);
+            String[] line = fileScanner.nextLine().split(baseDelimiter);
             lineNum++;
 
             if (line.length != 2) throw new InvalidFileException(lineNum);
@@ -58,7 +60,7 @@ public class DataLoader {
 
         int lineNum = 0;
         while (fileScanner.hasNextLine()) {
-            String[] line = fileScanner.nextLine().split(delimiter);
+            String[] line = fileScanner.nextLine().split(baseDelimiter);
             lineNum++;
 
             int x = -1, y = -1;
@@ -89,14 +91,10 @@ public class DataLoader {
         return asAdjacencyMap(getNumberOfNodes());
     }
 
+    // todo: require specified file paths / File objects
     public static Matrix loadMatrix() throws FileNotFoundException, InvalidFileException {
         ArrayList<Node> nodes = loadNodes();
         return new Matrix(nodes, loadEdges(nodes));
-    }
-
-    public static DiMatrix loadDiMatrix() throws InvalidFileException, FileNotFoundException {
-        ArrayList<Node> nodes = loadNodes();
-        return new DiMatrix(nodes, loadEdges(nodes));
     }
 
     public static ArrayList<Node> loadNodes() throws FileNotFoundException, InvalidFileException {
@@ -109,7 +107,7 @@ public class DataLoader {
             lineNum++;
             String line = fileScanner.nextLine();
 
-            String[] values = line.split(delimiter);
+            String[] values = line.split(baseDelimiter);
 
             String name = values[0];
             for (Node node : nodes) {
@@ -131,18 +129,122 @@ public class DataLoader {
         return nodes;
     }
 
-    public static boolean[][] loadEdges(ArrayList<Node> nodes) throws FileNotFoundException, InvalidFileException {
+    public static ArrayList<Edge> loadEdges(ArrayList<Node> nodes) throws FileNotFoundException, InvalidFileException {
         Scanner fileScanner = new Scanner(edgeFile);
 
         int nextID = getMaxID(nodes) + 1;
+
+        // Defaults if values are not set in the first line
+        Boolean directed = false; // true if directed, false if undirected, null if mixed
+        ArrayList<Boolean> mixedDirections = null; // for each edge true if directed, false if not
+        boolean weighted = true; // true if some edges may contain weights, false if there are no weights
+
+        String nodeDelimiter = null, directedDelimiter = null, undirectedDelimiter = null, weightDelimiter = null;
 
         ArrayList<String[]> loadedValues = new ArrayList<>();
         int lineNum = 0;
         while (fileScanner.hasNextLine()) {
             lineNum++;
-            String[] lineParts = fileScanner.nextLine().split(delimiter);
+            String line = fileScanner.nextLine();
+            boolean isEdgeDefinition = true;
+            switch (lineNum) {
+                case 1 -> {
+                    // Line 1: Either follow "directed/undirected/mixed:weighted/unweighted" or declare the delimiter
+                    // for nodes and node weights
+                    isEdgeDefinition = false;
+                    String[] options = line.split(":");
+                    boolean isInvalidOptions = true;
+                    if (options.length == 2) {
+                        isInvalidOptions = false;
+                        switch (options[0].toLowerCase()) {
+                            case "directed" -> directed = true;
+                            case "undirected" -> directed = false;
+                            case "mixed" -> {
+                                directed = null;
+                                mixedDirections = new ArrayList<>();
+                            }
+                            default -> isInvalidOptions = true;
+                        }
+                        switch (options[1].toLowerCase()) {
+                            case "weighted" -> weighted = true;
+                            case "unweighted" -> weighted = false;
+                            default -> isInvalidOptions = true;
+                        }
+                    }
+                    if (isInvalidOptions) {
+                        nodeDelimiter = line;
+                        weightDelimiter = line;
+                    }
+                }
+                case 2 -> {
+                    // Line 2: If using default values then the required delimiters have already been defined
+                    if (weightDelimiter != null) break;
 
-            if (lineParts.length < 2 || lineParts[0].equals(lineParts[1])) throw new InvalidFileException(lineNum);
+                    // Otherwise: If directed/undirected then the delimiter for the nodes, if mixed then the
+                    // delimiter for directed nodes
+                    isEdgeDefinition = false;
+                    if (directed == null) directedDelimiter = line;
+                    else nodeDelimiter = line;
+                }
+                case 3 -> {
+                    // Line 3: If using default values then the required delimiters have already been defined
+                    if (weightDelimiter != null || (directed != null && !weighted)) break;
+
+                    isEdgeDefinition = false;
+                    if (directed == null) {
+                        // Directed and undirected delimiters cannot be the same
+                        if (directedDelimiter.equals(line)) throw new InvalidFileException(lineNum);
+                        undirectedDelimiter = line;
+                    }
+                    else weightDelimiter = line;
+
+                    // todo: could just put continue at the end of each case
+                    // If mixed then the delimiter for undirected nodes
+                    // if not mixed and weighted then the delimiter between nodes and the edge weight
+                    // if not mixed and unweighted then will be the first edge definition
+                }
+                case 4 -> {
+                    // Line 4: Only used if the edges are mixed directions and weighted - used to
+                    // define the weight delimiter
+                    if (weighted && weightDelimiter == null) {
+                        isEdgeDefinition = false;
+                        weightDelimiter = line;
+                    }
+                }
+            }
+            if (!isEdgeDefinition) continue;
+
+            String[] lineParts;
+
+            if (directed == null) {
+                // Mixed
+                if (directedDelimiter == null || undirectedDelimiter == null) throw new InvalidFileException();
+                Boolean directedLine = calcDirectedMixed(line, directedDelimiter, undirectedDelimiter);
+                if (directedLine == null) throw new InvalidFileException(lineNum);
+                mixedDirections.add(directedLine);
+                lineParts = line.split((directedLine) ? directedDelimiter : undirectedDelimiter);
+            } else {
+                // Directed/Undirected
+                if (line.indexOf(nodeDelimiter) <= 0) throw new InvalidFileException(lineNum);
+                lineParts = line.split(nodeDelimiter);
+            }
+
+            if (lineParts.length < 2) throw new InvalidFileException(lineNum);
+            String secondPart = condenseLineParts(lineParts, 1);
+
+
+            if (weighted) {
+                // Weighted
+                String[] secondParts = secondPart.split(weightDelimiter);
+                if (secondParts.length == 0) throw new InvalidFileException(lineNum);
+                else if (secondParts.length == 1) lineParts = new String[]{lineParts[0], secondPart};
+                else lineParts = new String[]{lineParts[0], secondParts[0], condenseLineParts(secondParts, 1)};
+            } else {
+                // Unweighted
+                lineParts = new String[]{lineParts[0], secondPart};
+            }
+
+            if (lineParts[0].equals(lineParts[1])) throw new InvalidFileException(lineNum);
 
             int node1 = -1, node2 = -1;
             for (Node node : nodes) {
@@ -163,8 +265,31 @@ public class DataLoader {
 
             loadedValues.add(lineParts);
         }
+        fileScanner.close();
 
-        return createEdgeMatrix(nodes, loadedValues);
+        if (directed == null) return createEdges(nodes, loadedValues, mixedDirections);
+        return createEdges(nodes, loadedValues, directed);
+    }
+
+    private static String condenseLineParts(String[] parts, int startIndex) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = startIndex; i < parts.length; i++) builder.append(parts[i]);
+        return builder.toString();
+    }
+
+    private static Boolean calcDirectedMixed(String line, String directedDelimiter, String undirectedDelimiter) {
+        int indexDirected = line.indexOf(directedDelimiter);
+        int indexUndirected = line.indexOf(undirectedDelimiter);
+        // If neither delimiter was found, or either starts at 0 (meaning there is no content before it)
+        if (
+                (indexDirected == -1 && indexUndirected == -1)
+                || indexDirected == 0
+                || indexUndirected == 0
+        ) return null;
+        // If one of the delimiters incorporates the other, like "-" and "->", then take whichever is longer
+        // This means that 1-2 and 1->2 would give different results
+        if (indexDirected == indexUndirected) return directedDelimiter.length() > undirectedDelimiter.length();
+        return indexDirected != -1;
     }
 
     private static int getMaxID(ArrayList<Node> nodes) {
@@ -175,33 +300,44 @@ public class DataLoader {
         return maxID;
     }
 
-    private static boolean[][] createEdgeMatrix(ArrayList<Node> nodes, ArrayList<String[]> loadedValues) throws InvalidFileException {
-        boolean[][] edgeMatrix = new boolean[nodes.size()][nodes.size()];
-        for (String[] line : loadedValues) {
-            int node1 = -1, node2 = -1;
-            for (Node node : nodes) {
-                if (node.name().equals(line[0])) node1 = node.id();
-                if (node.name().equals(line[1])) node2 = node.id();
-            }
-
-            if (node1 == node2 || node1 < 0 || node2 < 0) throw new InvalidFileException();
-
-            edgeMatrix[node1][node2] = true;
-        }
-
-        return edgeMatrix;
+    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed) throws InvalidFileException {
+        return createEdges(nodes, loadedValues, directed, null);
     }
 
-    /*private static boolean[][] toEdgeMatrix(ArrayList<ArrayList<Boolean>> matrix) {
-        boolean[][] arrayMatrix = new boolean[matrix.size()][matrix.get(0).size()];
+    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, ArrayList<Boolean> mixedDirections) throws InvalidFileException {
+        if (mixedDirections == null) throw new InvalidFileException();
+        return createEdges(nodes, loadedValues, true, mixedDirections);
+    }
 
-        for (int x = 0; x < arrayMatrix.length; x++) {
-            for (int y = 0; y < arrayMatrix[x].length; y++) {
-                arrayMatrix[x][y] = matrix.get(x).get(y);
+    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed, ArrayList<Boolean> mixedDirections) throws InvalidFileException {
+        if (mixedDirections != null && loadedValues.size() != mixedDirections.size()) throw new InvalidFileException();
+
+        ArrayList<Edge> edges = new ArrayList<>();
+        for (int lineNum = 0; lineNum < loadedValues.size(); lineNum++) {
+            String[] line = loadedValues.get(lineNum);
+            if (line.length > 3) throw new InvalidFileException();
+
+            Node node1 = null, node2 = null;
+            for (Node node : nodes) {
+                if (node.name().equals(line[0])) node1 = node;
+                if (node.name().equals(line[1])) node2 = node;
+            }
+            if (node1 == null || node2 == null || node1.equals(node2)) throw new InvalidFileException();
+
+            boolean edgeDirected = directed;
+            if (mixedDirections != null) {
+                edgeDirected = mixedDirections.get(lineNum);
+            }
+
+            try {
+                if (line.length == 3) edges.add(new WeightedEdge(node1, node2, edgeDirected, line[2]));
+                else edges.add(new Edge(node1, node2, edgeDirected));
+            } catch (InvalidEdgeException e) {
+                throw new InvalidFileException();
             }
         }
 
-        return arrayMatrix;
-    }*/
+        return edges;
+    }
 }
 

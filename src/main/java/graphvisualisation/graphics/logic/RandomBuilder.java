@@ -1,10 +1,8 @@
 package graphvisualisation.graphics.logic;
 
-import graphvisualisation.data.graph.DiMatrix;
-import graphvisualisation.data.graph.Matrix;
-import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.graphics.graphing.Graph;
-import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
+import graphvisualisation.graphics.objects.DrawableEdge;
+import graphvisualisation.graphics.objects.DrawableNode;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 
 import java.util.ArrayList;
@@ -14,27 +12,10 @@ public class RandomBuilder implements GraphBuilder {
     /**
      * Clears a canvas and populates it with randomly positioned nodes.
      *
-     * @param edgeMatrix a directed graph matrix of the nodes and their edges
      * @param graph
-     * @param canvas     tbe canvas to be drawn to
      */
     @Override
-    public void build(Graph graph, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException {
-        build(graph, matrix, false);
-    }
-
-    /**
-     * Clears a canvas and populates it with randomly positioned nodes.
-     * @param canvas tbe canvas to be drawn to
-     * @param edgeMatrix a directed graph matrix of the nodes and their edges
-     * @param uniformNodeSize if true all nodes will have the same size equal to the largest node, if false all nodes
-     *                        are sized individually based on the width of their ID text.
-     */
-    @Override
-    public void build(Graph graph, Matrix matrix, boolean uniformNodeSize) throws InvalidEdgeException, UndefinedNodeException {
-        ArrayList<Node> nodes = matrix.getNodes();
-        boolean[][] edgeMatrix = matrix.getEdgeMatrix();
-        boolean isDirectional = matrix instanceof DiMatrix;
+    public void build(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges) throws UndefinedNodeException {
         int attempts = 0;
         boolean edgesValid = false;
         int attemptLimit = 4000;
@@ -44,43 +25,33 @@ public class RandomBuilder implements GraphBuilder {
             System.out.println("Generating canvas, attempt " + (attempts + 1));
             graph.clear();
 
-            // If all nodes must be created with uniform size, create them all first. Later they will just be moved
-            // rather than recreated.
-            if (uniformNodeSize) {
-                for (Node node : nodes) {
-                    graph.createNode(node);
-                }
-                graph.resizeNodes(true, false);
-            }
+            graph.resizeNodes(true, false);
+            for (DrawableNode node : nodes) node.moveTo(graph.generatePoint());
 
             // Generate or reposition the nodes to find suitable locations. If, after 1000 attempts, a node could not
             // be properly positioned it is easiest to assume that there is no valid position to move any new nodes to.
             boolean canIterate = true;
             int iterations;
-            for (Node node : nodes) {
+            for (DrawableNode node : nodes) {
                 // canIterate is checked afterwards so that the nodes are still positioned randomly even if they are
                 // no longer being adjusted
                 for (iterations = 0;
-                     iterations <= maxNodeMovements && !graph.isValidNode(graph.createNode(node, graph.generatePoint())) && canIterate;
+                     iterations <= maxNodeMovements && !graph.isValidNode(node) && canIterate;
                      ++iterations) {
+                    node.moveTo(graph.generatePoint());
                     if (iterations == maxNodeMovements) {
-                        System.out.println("Iterated too many times while trying to position node " + node.name() + ", no longer repositioning any nodes.");
+                        System.out.println("Iterated too many times while trying to position node " + node + ", no longer repositioning any nodes.");
                         canIterate = false;
                     }
                 }
             }
 
             edgesValid = true;
-            for (int node1 = 0; node1 < edgeMatrix.length; node1++) {
-                for (int node2 = 0; node2 < edgeMatrix.length; node2++) {
-                    if (edgeMatrix[node1][node2]) {
-                        System.out.println("Creating edge between " + node1 + " and " + node2);
-                        if (graph.intersectsAnyNode(graph.createEdge(node1, node2, isDirectional))) {
-                            // todo: instead this could make automatic adjustments to the parameters, once click and drag
-                            //  feature has been made - or could be best to just display "clean graph could not be found"
-                            edgesValid = false;
-                        }
-                    }
+            for (DrawableEdge edge : edges) {
+                System.out.println("Creating edge between " + edge.startNode().toString() + " and " + edge.endNode().toString());
+                if (graph.intersectsAnyNode(edge)) {
+                    edgesValid = false;
+                    break;
                 }
             }
             attempts++;

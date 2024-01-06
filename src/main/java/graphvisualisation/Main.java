@@ -1,7 +1,5 @@
 package graphvisualisation;
 
-import graphvisualisation.data.graph.DiAdjList;
-import graphvisualisation.data.graph.DiMatrix;
 import graphvisualisation.graphics.ApplicationWindow;
 import javafx.application.Application;
 import javafx.stage.Stage;

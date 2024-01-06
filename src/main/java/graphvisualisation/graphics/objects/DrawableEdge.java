@@ -1,6 +1,7 @@
 package graphvisualisation.graphics.objects;
 
 import graphvisualisation.graphics.canvas.Point;
+import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.Parent;
@@ -19,24 +20,22 @@ public class DrawableEdge extends Parent {
     private final DrawableNode startNode;
     private final DrawableNode endNode;
     private final boolean directed;
+    protected final Graph graph;
     private final EdgeLine edgeLine;
     private Arrow arrow;
-
-    public DrawableEdge(DrawableNode startNode, DrawableNode endNode) throws UndefinedNodeException, InvalidEdgeException {
-        this(startNode, endNode, false);
-    }
 
     public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
         // Ensure that both the start node and the end node are defined correctly
         if (startNode == null || startNode.isUndefined()) throw new UndefinedNodeException(startNode);
         if (endNode == null || endNode.isUndefined()) throw new UndefinedNodeException(endNode);
         // Make sure the start and end nodes are different
-        if (startNode.equals(endNode))
+        if (startNode.equals(endNode) || !startNode.isOnSameGraph(endNode))
             throw new InvalidEdgeException(startNode, endNode);
 
         this.startNode = startNode;
         this.endNode = endNode;
         this.directed = directed;
+        this.graph = startNode.getGraph();
 
         // Create the line between the nodes
         edgeLine = new EdgeLine();
@@ -48,6 +47,10 @@ public class DrawableEdge extends Parent {
             arrow = new Arrow();
             getChildren().add(arrow);
         }
+    }
+
+    public void draw() {
+        graph.draw(this);
     }
 
     // todo: possible split to allow changing stroke and fill
@@ -71,7 +74,11 @@ public class DrawableEdge extends Parent {
      * @return true if the node is involved in the edge, false otherwise
      */
     public boolean involves(int nodeID) {
-        return startNode.getNodeID() == nodeID || endNode.getNodeID() == nodeID;
+        return startNode.id() == nodeID || endNode.id() == nodeID;
+    }
+
+    public boolean involves(DrawableNode node) {
+        return startNode.equals(node) || endNode.equals(node);
     }
 
     public boolean intersectsAnyOf(ArrayList<DrawableNode> nodes) {
@@ -84,7 +91,7 @@ public class DrawableEdge extends Parent {
 
     public boolean intersectsNode(DrawableNode node) {
         // If the node is one of the ends of the line then ignore whether it intersects or not
-        if (involves(node.getNodeID())) return false;
+        if (involves(node)) return false;
 
         Point startPoint = startNode.getCentre();
         Point endPoint = endNode.getCentre();
@@ -131,17 +138,15 @@ public class DrawableEdge extends Parent {
 
     /**
      * @return the edge's starting node as a {@link DrawableNode}.
-     * @deprecated currently unused so set to private
      */
-    private DrawableNode getStartNode() {
+    public DrawableNode startNode() {
         return startNode;
     }
 
     /**
      * @return the edge's ending node as a {@link DrawableNode}.
-     * @deprecated currently unused so set to private
      */
-    private DrawableNode getEndNode() {
+    public DrawableNode endNode() {
         return endNode;
     }
 

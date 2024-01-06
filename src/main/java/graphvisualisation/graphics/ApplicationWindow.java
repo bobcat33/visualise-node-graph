@@ -5,8 +5,9 @@ import graphvisualisation.data.storage.InvalidFileException;
 import graphvisualisation.graphics.graphing.ForceDirectedGraph;
 import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.logic.RandomBuilder;
+import graphvisualisation.graphics.objects.exceptions.DuplicateEdgeException;
+import graphvisualisation.graphics.objects.exceptions.DuplicateNodeException;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
-import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 
@@ -17,10 +18,10 @@ public class ApplicationWindow {
 
     private final Scene scene;
 
-    public ApplicationWindow() throws InvalidEdgeException, UndefinedNodeException, InvalidFileException, FileNotFoundException {
+    public ApplicationWindow() throws InvalidFileException, FileNotFoundException, DuplicateNodeException, InvalidEdgeException, DuplicateEdgeException {
 
-//        Graph graph = new Graph(new RandomBuilder(), WIDTH, HEIGHT, DataLoader.loadDiMatrix());
-        ForceDirectedGraph graph = new ForceDirectedGraph(WIDTH, HEIGHT, DataLoader.loadDiMatrix());
+//        Graph graph = new Graph(new RandomBuilder(), WIDTH, HEIGHT, DataLoader.loadMatrix());
+        ForceDirectedGraph graph = new ForceDirectedGraph(WIDTH, HEIGHT, DataLoader.loadMatrix());
         Group root = new Group();
 
         scene = new Scene(root, WIDTH, HEIGHT);

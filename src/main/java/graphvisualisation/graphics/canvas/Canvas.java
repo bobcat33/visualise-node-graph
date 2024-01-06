@@ -2,6 +2,7 @@ package graphvisualisation.graphics.canvas;
 
 import graphvisualisation.graphics.objects.DrawableEdge;
 import graphvisualisation.graphics.objects.DrawableNode;
+import graphvisualisation.graphics.objects.WeightedDrawableEdge;
 import graphvisualisation.graphics.objects.WeightedDrawableNode;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -61,7 +62,10 @@ public class Canvas extends Parent {
 
     public boolean draw(DrawableNode node) {
         boolean nodeExists = exists(node);
-        if (!nodeExists) getChildren().add(node);
+        if (!nodeExists) {
+            getChildren().add(node);
+            if (node instanceof WeightedDrawableNode weightedNode) getChildren().add(weightedNode.getWeight());
+        }
         resetZIndex();
         return !nodeExists;
     }
@@ -72,7 +76,10 @@ public class Canvas extends Parent {
 
     public boolean draw(DrawableEdge edge) {
         boolean edgeExists = exists(edge);
-        if (!edgeExists) getChildren().add(edge);
+        if (!edgeExists) {
+            getChildren().add(edge);
+            if (edge instanceof WeightedDrawableEdge weightedEdge) getChildren().add(weightedEdge.getWeight());
+        }
         resetZIndex();
         return !edgeExists;
     }
@@ -91,10 +98,9 @@ public class Canvas extends Parent {
         resetZIndex();
     }
 
-    public boolean remove(DrawableNode node) {
-        int numFound = 0;
-        while (getChildren().remove(node)) {numFound++;}
-        return numFound > 0;
+    public void remove(DrawableNode node) {
+        while (getChildren().remove(node));
+        while ((node instanceof WeightedDrawableNode weightedNode) && getChildren().remove(weightedNode));
     }
 
     public void remove(DrawableNode[] nodes) {
@@ -102,10 +108,9 @@ public class Canvas extends Parent {
             remove(node);
     }
 
-    public boolean remove(DrawableEdge edge) {
-        int numFound = 0;
-        while (getChildren().remove(edge)) {numFound++;}
-        return numFound > 0;
+    public void remove(DrawableEdge edge) {
+        while (getChildren().remove(edge));
+        while ((edge instanceof WeightedDrawableEdge weightedEdge) && getChildren().remove(weightedEdge));
     }
 
     public void remove(DrawableEdge[] edges) {
