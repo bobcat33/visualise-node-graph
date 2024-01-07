@@ -3,7 +3,6 @@ package graphvisualisation.graphics.objects;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -18,18 +17,33 @@ public class WeightedDrawableEdge extends DrawableEdge {
 
     private final String value;
     private final Weight weight;
+    private HoverAction hoverAction;
 
     public WeightedDrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed, String value) throws InvalidEdgeException, UndefinedNodeException {
+        this(startNode, endNode, directed, value, (edge, isHovering) -> {
+            if (isHovering) edge.setColour(Color.DARKBLUE);
+            else edge.setColour(Color.BLACK);
+        });
+    }
+
+    public WeightedDrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed, String value, HoverAction hoverAction) throws InvalidEdgeException, UndefinedNodeException {
         super(startNode, endNode, directed);
         this.value = value;
+        this.hoverAction = hoverAction;
 
         this.weight = new Weight(this);
-        System.out.println("New weight created with value: " + value);
 
-        HoverListener listener = new HoverListener(this, weight);
+        ChangeListener<Boolean> hoverListener = (ignored1, ignored2, isHovered) -> {
+            if (isHovering() == isHovered) {
+                weight.setVisible(isHovered);
+                if (this.hoverAction != null) this.hoverAction.handle(this, isHovered);
+            }
+        };
 
-        edgeLine.hoverProperty().addListener(listener);
-        arrow.hoverProperty().addListener(listener);
+        this.weight.setListener(hoverListener);
+
+        edgeLine.hoverProperty().addListener(hoverListener);
+        if (arrow != null) arrow.hoverProperty().addListener(hoverListener);
     }
 
     public String value() {
@@ -38,6 +52,15 @@ public class WeightedDrawableEdge extends DrawableEdge {
 
     public Weight getWeight() {
         return weight;
+    }
+
+    public void setHoverAction(HoverAction hoverAction) {
+        this.hoverAction = hoverAction;
+    }
+
+    private boolean isHovering() {
+        if (arrow != null) return edgeLine.isHover() || arrow.isHover();
+        return edgeLine.isHover();
     }
 
     public class Weight extends StackPane {
@@ -61,9 +84,11 @@ public class WeightedDrawableEdge extends DrawableEdge {
             textBorder.setStroke(Color.BLACK);
             textBorder.setStrokeWidth(WEIGHTED_CONTENT_BORDER_WIDTH);
 
-            hoverProperty().addListener(new HoverListener(edge, this));
-
             getChildren().addAll(textBorder, text);
+        }
+
+        private void setListener(ChangeListener<Boolean> hoverListener) {
+            hoverProperty().addListener(hoverListener);
         }
 
         public String value() {
@@ -83,12 +108,7 @@ public class WeightedDrawableEdge extends DrawableEdge {
         }
     }
 
-    private record HoverListener(WeightedDrawableEdge edge, Weight weight) implements ChangeListener<Boolean> {
-        @Override
-        public void changed(ObservableValue<? extends Boolean> ignored1, Boolean ignored2, Boolean isHovered) {
-            if (isHovered) edge.setColour(Color.RED);
-            else edge.setColour(Color.BLACK);
-            weight.setVisible(isHovered);
-        }
+    public interface HoverAction {
+        void handle(WeightedDrawableEdge edge, boolean isHovering);
     }
 }

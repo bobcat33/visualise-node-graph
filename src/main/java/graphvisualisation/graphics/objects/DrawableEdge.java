@@ -19,7 +19,7 @@ public class DrawableEdge extends Parent {
 
     private final DrawableNode startNode;
     private final DrawableNode endNode;
-    private final boolean directed;
+    protected final boolean directed;
     protected final Graph graph;
     protected final EdgeLine edgeLine;
     protected Arrow arrow;
@@ -56,7 +56,7 @@ public class DrawableEdge extends Parent {
     // todo: possible split to allow changing stroke and fill
     public void setColour(Color colour) {
         edgeLine.setStroke(colour);
-        arrow.setFill(colour);
+        if (arrow != null) arrow.setFill(colour);
     }
 
     // todo: ensure that this method is always called when nodes are moved/resized

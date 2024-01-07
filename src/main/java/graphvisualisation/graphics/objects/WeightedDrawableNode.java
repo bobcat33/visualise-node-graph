@@ -3,9 +3,9 @@ package graphvisualisation.graphics.objects;
 import graphvisualisation.data.graph.elements.WeightedNode;
 import graphvisualisation.graphics.graphing.Graph;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -18,16 +18,40 @@ public class WeightedDrawableNode extends DrawableNode {
 
     private final String value;
     private final Weight weight;
+    private HoverAction hoverAction;
 
     public WeightedDrawableNode(Graph graph, WeightedNode node) {
+        this(graph, node, (actionNode, isHovered) -> {
+            if (isHovered) System.out.println("Hovered over node " + actionNode.name());
+            else System.out.println("Moved off node " + actionNode.name());
+        });
+    }
+
+    public WeightedDrawableNode(Graph graph, WeightedNode node, HoverAction hoverAction) {
         super(graph, node);
         this.value = node.value();
+        this.hoverAction = hoverAction;
 
         this.weight = new Weight(this);
 
-        border.hoverProperty().addListener(new HoverListener(this, weight));
+        Circle hoverMask = new Circle(getNodeRadius(), Color.TRANSPARENT);
+        getChildren().add(hoverMask);
 
-        textID.hoverProperty().addListener(new HoverListener(this, weight));
+//        ChangeListener<Boolean> hoverListener = (ignored1, ignored2, isHovered) -> {
+//            weight.setVisible(isHovered);
+//            handleHover(isHovered);
+//        };
+
+        this.weight.setListener((ignored1, ignored2, isHovered) -> weight.setVisible(isHovered));
+
+        hoverMask.hoverProperty().addListener((ignored1, ignored2, isHovered) -> {
+            weight.setVisible(isHovered);
+            handleHover(isHovered);
+        });
+        /*
+        border.hoverProperty().addListener(hoverListener);
+
+        textID.hoverProperty().addListener(hoverListener);*/
     }
 
     public String value() {
@@ -36,6 +60,14 @@ public class WeightedDrawableNode extends DrawableNode {
 
     public Weight getWeight() {
         return weight;
+    }
+
+    public void setHoverAction(HoverAction hoverAction) {
+        this.hoverAction = hoverAction;
+    }
+
+    private void handleHover(boolean isHovering) {
+        if (hoverAction != null) hoverAction.handle(this, isHovering);
     }
 
     public class Weight extends StackPane {
@@ -59,9 +91,11 @@ public class WeightedDrawableNode extends DrawableNode {
             textBorder.setStroke(Color.BLACK);
             textBorder.setStrokeWidth(WEIGHTED_CONTENT_BORDER_WIDTH);
 
-            hoverProperty().addListener(new HoverListener(node, this));
-
             getChildren().addAll(textBorder, text);
+        }
+
+        private void setListener(ChangeListener<Boolean> hoverListener) {
+            hoverProperty().addListener(hoverListener);
         }
 
         public String value() {
@@ -81,10 +115,7 @@ public class WeightedDrawableNode extends DrawableNode {
         }
     }
 
-    private record HoverListener(WeightedDrawableNode node, Weight weight) implements ChangeListener<Boolean> {
-        @Override
-        public void changed(ObservableValue<? extends Boolean> ignored1, Boolean ignored2, Boolean isHovered) {
-            weight.setVisible(isHovered);
-        }
+    public interface HoverAction {
+        void handle(WeightedDrawableNode node, boolean isHovering);
     }
 }
