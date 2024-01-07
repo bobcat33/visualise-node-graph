@@ -34,7 +34,8 @@ public class Canvas extends Parent {
 
         ArrayList<DrawableNode> nodes = new ArrayList<>();
         ArrayList<DrawableEdge> edges = new ArrayList<>();
-        ArrayList<WeightedDrawableNode.Weight> weights = new ArrayList<>();
+        ArrayList<WeightedDrawableNode.Weight> nodeWeights = new ArrayList<>();
+        ArrayList<WeightedDrawableEdge.Weight> edgeWeights = new ArrayList<>();
 
         for (Node child : getChildren()) {
             if (child instanceof DrawableNode node) {
@@ -44,7 +45,10 @@ public class Canvas extends Parent {
                 edges.add(edge);
             }
             if (child instanceof WeightedDrawableNode.Weight weight) {
-                weights.add(weight);
+                nodeWeights.add(weight);
+            }
+            if (child instanceof WeightedDrawableEdge.Weight weight) {
+                edgeWeights.add(weight);
             }
         }
 
@@ -55,7 +59,10 @@ public class Canvas extends Parent {
         for (DrawableEdge edge : edges) {
             getChildren().add(edge);
         }
-        for (WeightedDrawableNode.Weight weight : weights) {
+        for (WeightedDrawableNode.Weight weight : nodeWeights) {
+            getChildren().add(weight);
+        }
+        for (WeightedDrawableEdge.Weight weight : edgeWeights) {
             getChildren().add(weight);
         }
     }

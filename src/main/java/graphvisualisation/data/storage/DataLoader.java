@@ -107,20 +107,20 @@ public class DataLoader {
             lineNum++;
             String line = fileScanner.nextLine();
 
-            String[] values = line.split(baseDelimiter);
+            String[] values = line.split(baseDelimiter, 2);
+            if (values.length == 0) throw new InvalidFileException(lineNum);
+
+            // Remove whitespace
+            trimParts(values);
 
             String name = values[0];
+            if (name.equals("")) throw new InvalidFileException(lineNum);
             for (Node node : nodes) {
                 if (node.name().equals(name)) throw new InvalidFileException(lineNum);
             }
 
-            StringBuilder value = new StringBuilder();
-
-            if (values.length > 1) {
-                for (int i = 1; i < values.length; i++) {
-                    value.append(values[i]);
-                }
-                nodes.add(new WeightedNode(lineNum-1, name, value.toString()));
+            if (values.length == 2) {
+                nodes.add(new WeightedNode(lineNum-1, name, values[1]));
             } else {
                 nodes.add(new Node(lineNum-1, name));
             }
@@ -144,6 +144,7 @@ public class DataLoader {
         ArrayList<String[]> loadedValues = new ArrayList<>();
         int lineNum = 0;
         while (fileScanner.hasNextLine()) {
+            // todo: allow default delimiters if they arent specified in the file
             lineNum++;
             String line = fileScanner.nextLine();
             boolean isEdgeDefinition = true;
@@ -172,31 +173,36 @@ public class DataLoader {
                         }
                     }
                     if (isInvalidOptions) {
-                        nodeDelimiter = line;
-                        weightDelimiter = line;
+                        String value = loadDelimiter(lineNum, line);
+                        nodeDelimiter = value;
+                        weightDelimiter = value;
                     }
                 }
                 case 2 -> {
                     // Line 2: If using default values then the required delimiters have already been defined
                     if (weightDelimiter != null) break;
 
+                    String value = loadDelimiter(lineNum, line);
+
                     // Otherwise: If directed/undirected then the delimiter for the nodes, if mixed then the
                     // delimiter for directed nodes
                     isEdgeDefinition = false;
-                    if (directed == null) directedDelimiter = line;
-                    else nodeDelimiter = line;
+                    if (directed == null) directedDelimiter = value;
+                    else nodeDelimiter = value;
                 }
                 case 3 -> {
                     // Line 3: If using default values then the required delimiters have already been defined
                     if (weightDelimiter != null || (directed != null && !weighted)) break;
 
+                    String value = loadDelimiter(lineNum, line);
+
                     isEdgeDefinition = false;
                     if (directed == null) {
                         // Directed and undirected delimiters cannot be the same
-                        if (directedDelimiter.equals(line)) throw new InvalidFileException(lineNum);
-                        undirectedDelimiter = line;
+                        if (directedDelimiter.equals(value)) throw new InvalidFileException(lineNum);
+                        undirectedDelimiter = value;
                     }
-                    else weightDelimiter = line;
+                    else weightDelimiter = value;
 
                     // todo: could just put continue at the end of each case
                     // If mixed then the delimiter for undirected nodes
@@ -208,7 +214,7 @@ public class DataLoader {
                     // define the weight delimiter
                     if (weighted && weightDelimiter == null) {
                         isEdgeDefinition = false;
-                        weightDelimiter = line;
+                        weightDelimiter = loadDelimiter(lineNum, line);
                     }
                 }
             }
@@ -222,29 +228,27 @@ public class DataLoader {
                 Boolean directedLine = calcDirectedMixed(line, directedDelimiter, undirectedDelimiter);
                 if (directedLine == null) throw new InvalidFileException(lineNum);
                 mixedDirections.add(directedLine);
-                lineParts = line.split((directedLine) ? directedDelimiter : undirectedDelimiter);
+                lineParts = line.split((directedLine) ? directedDelimiter : undirectedDelimiter, 2);
             } else {
                 // Directed/Undirected
                 if (line.indexOf(nodeDelimiter) <= 0) throw new InvalidFileException(lineNum);
-                lineParts = line.split(nodeDelimiter);
+                lineParts = line.split(nodeDelimiter, 2);
             }
 
             if (lineParts.length < 2) throw new InvalidFileException(lineNum);
-            String secondPart = condenseLineParts(lineParts, 1);
-
 
             if (weighted) {
-                // Weighted
-                String[] secondParts = secondPart.split(weightDelimiter);
+                String[] secondParts = lineParts[1].split(weightDelimiter, 2);
                 if (secondParts.length == 0) throw new InvalidFileException(lineNum);
-                else if (secondParts.length == 1) lineParts = new String[]{lineParts[0], secondPart};
-                else lineParts = new String[]{lineParts[0], secondParts[0], condenseLineParts(secondParts, 1)};
-            } else {
-                // Unweighted
-                lineParts = new String[]{lineParts[0], secondPart};
+                else if (secondParts.length == 2)
+                    lineParts = new String[]{lineParts[0], secondParts[0], secondParts[1]};
             }
 
-            if (lineParts[0].equals(lineParts[1])) throw new InvalidFileException(lineNum);
+            // Remove whitespace
+            trimParts(lineParts);
+
+            // If the node names are the same or empty
+            if (lineParts[0].equals(lineParts[1]) || lineParts[0].equals("") || lineParts[1].equals("")) throw new InvalidFileException(lineNum);
 
             int node1 = -1, node2 = -1;
             for (Node node : nodes) {
@@ -252,11 +256,13 @@ public class DataLoader {
                 if (node.name().equals(lineParts[1])) node2 = node.id();
             }
 
-            if (node1 < 0) {
+            if (node1 < -1 || node2 < -1) throw new InvalidFileException(lineNum);
+
+            if (node1 == -1) {
                 nodes.add(new Node((node1 = nextID++), lineParts[0]));
                 System.out.println("Node created '" + lineParts[0] + "' with id " + node1);
             }
-            if (node2 < 0) {
+            if (node2 == -1) {
                 nodes.add(new Node((node2 = nextID++), lineParts[1]));
                 System.out.println("Node created '" + lineParts[1] + "' with id " + node2);
             }
@@ -269,12 +275,6 @@ public class DataLoader {
 
         if (directed == null) return createEdges(nodes, loadedValues, mixedDirections);
         return createEdges(nodes, loadedValues, directed);
-    }
-
-    private static String condenseLineParts(String[] parts, int startIndex) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = startIndex; i < parts.length; i++) builder.append(parts[i]);
-        return builder.toString();
     }
 
     private static Boolean calcDirectedMixed(String line, String directedDelimiter, String undirectedDelimiter) {
@@ -298,6 +298,15 @@ public class DataLoader {
             if (node.id() > maxID) maxID = node.id();
         }
         return maxID;
+    }
+
+    private static void trimParts(String[] parts) {
+        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim();
+    }
+
+    private static String loadDelimiter(int lineNum, String value) throws InvalidFileException {
+        if (!value.startsWith("\"") || !value.endsWith("\"")) throw new InvalidFileException(lineNum);
+        return value.replaceAll("\"(.*)\"", "$1");
     }
 
     private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed) throws InvalidFileException {

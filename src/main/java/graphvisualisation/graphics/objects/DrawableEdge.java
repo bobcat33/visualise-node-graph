@@ -21,8 +21,8 @@ public class DrawableEdge extends Parent {
     private final DrawableNode endNode;
     private final boolean directed;
     protected final Graph graph;
-    private final EdgeLine edgeLine;
-    private Arrow arrow;
+    protected final EdgeLine edgeLine;
+    protected Arrow arrow;
 
     public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
         // Ensure that both the start node and the end node are defined correctly

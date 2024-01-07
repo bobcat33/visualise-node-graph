@@ -26,7 +26,10 @@ public class WeightedDrawableEdge extends DrawableEdge {
         this.weight = new Weight(this);
         System.out.println("New weight created with value: " + value);
 
-        hoverProperty().addListener(new HoverListener(this, weight));
+        HoverListener listener = new HoverListener(this, weight);
+
+        edgeLine.hoverProperty().addListener(listener);
+        arrow.hoverProperty().addListener(listener);
     }
 
     public String value() {
@@ -83,7 +86,8 @@ public class WeightedDrawableEdge extends DrawableEdge {
     private record HoverListener(WeightedDrawableEdge edge, Weight weight) implements ChangeListener<Boolean> {
         @Override
         public void changed(ObservableValue<? extends Boolean> ignored1, Boolean ignored2, Boolean isHovered) {
-
+            if (isHovered) edge.setColour(Color.RED);
+            else edge.setColour(Color.BLACK);
             weight.setVisible(isHovered);
         }
     }
