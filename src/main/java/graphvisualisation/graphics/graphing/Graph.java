@@ -234,7 +234,7 @@ public class Graph extends Parent {
      * @deprecated used for testing
      */
     public void drawDot(double x, double y) {
-        canvas.draw(new Dot(x, y));
+        drawDot(new Dot(x, y));
     }
 
     /**
@@ -242,5 +242,12 @@ public class Graph extends Parent {
      */
     public void drawDot(Point point) {
         drawDot(point.getX(), point.getY());
+    }
+
+    /**
+     * @deprecated used for testing
+     */
+    public void drawDot(Dot dot) {
+        canvas.draw(dot);
     }
 }

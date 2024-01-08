@@ -23,6 +23,7 @@ public class DrawableEdge extends Parent {
     protected final boolean directed;
     protected final Graph graph;
     protected final EdgeLine edgeLine;
+    private final Dot dot;
     protected Arrow arrow;
 
     public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
@@ -37,6 +38,8 @@ public class DrawableEdge extends Parent {
         this.endNode = endNode;
         this.directed = directed;
         this.graph = startNode.getGraph();
+        this.dot = new Dot();
+        graph.drawDot(dot);
 
         // Create the line between the nodes
         edgeLine = new EdgeLine();
@@ -94,13 +97,27 @@ public class DrawableEdge extends Parent {
         // If the node is one of the ends of the line then ignore whether it intersects or not
         if (involves(node)) return false;
 
+        // Find the closest point on the line to the node
+        Point closest = closestPointTo(node);
+
+        // If the point is not on the line then the node does not intersect
+        if (closest == null) return false;
+
+        // Find the distance between the closest point and the centre of the circle
+        Point centre = node.getCentre();
+        double distanceX = closest.getX() - centre.getX();
+        double distanceY = closest.getY() - centre.getY();
+        double distance = Math.sqrt((distanceX*distanceX) + (distanceY*distanceY));
+
+        return distance<=node.getNodeRadius();
+    }
+
+    public Point closestPointTo(Point point) {
         Point startPoint = startNode.getCentre();
         Point endPoint = endNode.getCentre();
 
-        Point nodeCentre = node.getCentre();
-
-        double cx = nodeCentre.getX();
-        double cy = nodeCentre.getY();
+        double cx = point.getX();
+        double cy = point.getY();
 
         // Initialise the start and end coordinates of the line - (x1, y1) and (x2, y2)
         double x1 = startPoint.getX(), x2 = endPoint.getX();
@@ -125,15 +142,21 @@ public class DrawableEdge extends Parent {
         double d2 = closest.distance(x2, y2);
 
         // If the point is not on the line then the node does not intersect
-        if (!(d1 + d2 >= lineLength-0.01 && d1 + d2 <= lineLength+0.01)) return false;
+        if (!(d1 + d2 >= lineLength-0.01 && d1 + d2 <= lineLength+0.01)) {
+//            this.dot.setVisible(false);
+            return null;
+        }
+//        this.dot.setVisible(true);
+        this.dot.move(closest);
+        return closest;
+    }
 
-        // Find the distance between the closest point and the centre of the circle
-        double distanceX = closestX - cx;
-        double distanceY = closestY - cy;
-        double distance = Math.sqrt((distanceX*distanceX) + (distanceY*distanceY));
+    public Point closestPointTo(double x, double y) {
+        return closestPointTo(new Point(x, y));
+    }
 
-        return distance<=node.getNodeRadius();
-
+    public Point closestPointTo(DrawableNode node) {
+        return closestPointTo(node.getCentre());
     }
 
 

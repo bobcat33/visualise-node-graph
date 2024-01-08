@@ -14,12 +14,16 @@ import java.util.ArrayList;
 
 public class ForceDirectedBuilder implements GraphBuilder {
     private final double repulsionConstant = 10000d; // todo: make scalable based on node size and idealEdgeLength
+    private final double edgeRepulsionConstant = 10d;
+    private final double sideRepulsionConstant = 1000d;
     private final double springConstant = 1d; // todo: make scalable based on idealEdgeLength
     private final double idealEdgeLength = DrawableNode.MIN_SPACE * 3; // todo: scale based on node size? or graph size
     private final double epsilon = 0.05d; // todo: probably make scalable based on repulsionConstant
     private final double cooling = 0.99999d;
     private final int maxIterations = 1000000000;
     private final int frameDuration = 1;
+    private final boolean edgesRepel = false;
+    private final boolean graphSidesRepel = true;
 
     private final boolean animated;
 
@@ -43,14 +47,15 @@ public class ForceDirectedBuilder implements GraphBuilder {
 
         if (animated) {
             Timeline timeline = new Timeline();
-            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(frameDuration), new Frame(graph, nodes, timeline)));
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(frameDuration),
+                    new Frame(graph, nodes, edges, timeline)));
             timeline.setCycleCount(maxIterations);
             timeline.play();
         }
 
         else {
             int t = 0;
-            while (t++ < maxIterations && applyForces(graph, nodes, t) > epsilon) {}
+            while (t++ < maxIterations && applyForces(graph, nodes, edges, t) > epsilon) {}
             System.out.println("Forces applied.");
         }
 
@@ -71,7 +76,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
         }
     }
 
-    private double applyForces(Graph graph, ArrayList<DrawableNode> nodes, int iteration) {
+    private ArrayList<Point> calcForces(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges) {
         ArrayList<Point> forces = new ArrayList<>();
 
         for (DrawableNode node : nodes) {
@@ -82,8 +87,66 @@ public class ForceDirectedBuilder implements GraphBuilder {
                     forceOnNode = forceOnNode.add(force);
                 }
             }
+            if (edgesRepel) forceOnNode = forceOnNode.add(calcEdgeRepulsion(node, edges));
+            if (graphSidesRepel) forceOnNode = forceOnNode.add(calcSideRepulsion(graph, node));
             forces.add(forceOnNode);
         }
+
+        return forces;
+    }
+
+    private Point calcEdgeRepulsion(DrawableNode node, ArrayList<DrawableEdge> edges) {
+        Point forceOnNode = new Point();
+        for (DrawableEdge edge : edges) {
+            // If the node is part of the edge don't repel
+            if (edge.involves(node)) continue;
+
+            // Get the closest point on the edge relative to the node
+            Point start = node.getCentre();
+            Point end = edge.closestPointTo(start);
+
+            // If the node is past either end of the edge then don't repel
+            if (end == null || start.equals(end)) continue;
+
+            double distance = start.distanceTo(end);
+            if (distance <= 10) {
+                System.out.println("Distance from node '" + node.name() + "' to line = " + distance);
+                continue;
+            }
+
+            if (distance >= node.getNodeRadius() && distance <= node.getNodeRadius()) continue;
+
+            forceOnNode = forceOnNode.add(calcRepulsionBetween(end, start, edgeRepulsionConstant));
+        }
+        return forceOnNode;
+    }
+
+    private Point calcSideRepulsion(Graph graph, DrawableNode node) {
+        double graphHeight = graph.height();
+        double graphWidth = graph.width();
+        Point centre = node.getCentre();
+
+        Point top = new Point(centre.getX(), 0);
+        Point bottom = new Point(centre.getX(), graphHeight);
+        Point left = new Point(0, centre.getY());
+        Point right = new Point(graphWidth, centre.getY());
+
+        Point force = new Point();
+        force = force.add(calcRepulsionBetween(top, centre, sideRepulsionConstant));
+        force = force.add(calcRepulsionBetween(bottom, centre, sideRepulsionConstant));
+        force = force.add(calcRepulsionBetween(left, centre, sideRepulsionConstant));
+        force = force.add(calcRepulsionBetween(right, centre, sideRepulsionConstant));
+
+        return force;
+    }
+
+    private Point calcRepulsionBetween(Point start, Point end, double repulsionConstant) {
+        double distance = start.distanceTo(end);
+        return start.getVectorTo(end).normalize().multiply(repulsionConstant/(distance*distance));
+    }
+
+    private double applyForces(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges, int iteration) {
+        ArrayList<Point> forces = calcForces(graph, nodes, edges);
 
         double maxMove = 0;
         for (int nodeID = 0; nodeID < forces.size(); nodeID++) {
@@ -95,12 +158,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
     }
 
     private Point calcRepulsion(DrawableNode node1, DrawableNode node2) {
-        Point start = node1.getCentre();
-        Point end = node2.getCentre();
-
-        double distance = end.distanceTo(start);
-
-        return end.getVectorTo(start).normalize().multiply(repulsionConstant/(distance*distance));
+        return calcRepulsionBetween(node2.getCentre(), node1.getCentre(), repulsionConstant);
     }
 
     private Point calcSpring(DrawableNode node1, DrawableNode node2) {
@@ -133,19 +191,21 @@ public class ForceDirectedBuilder implements GraphBuilder {
     private class Frame implements EventHandler<ActionEvent> {
         private final Graph graph;
         private final ArrayList<DrawableNode> nodes;
+        private final ArrayList<DrawableEdge> edges;
         private final Timeline timeline;
         private int t = 0;
 
-        private Frame(Graph graph, ArrayList<DrawableNode> nodes, Timeline timeline) {
+        private Frame(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges, Timeline timeline) {
             this.graph = graph;
             this.nodes = nodes;
+            this.edges = edges;
             this.timeline = timeline;
         }
 
         @Override
         public void handle(ActionEvent actionEvent) {
 
-            if (t++ >= maxIterations || applyForces(graph, nodes, t) <= epsilon) {
+            if (t++ >= maxIterations || applyForces(graph, nodes, edges, t) <= epsilon) {
                 System.out.println("Forces applied.");
                 timeline.stop();
             }

@@ -1,9 +1,6 @@
 package graphvisualisation.graphics.canvas;
 
-import graphvisualisation.graphics.objects.DrawableEdge;
-import graphvisualisation.graphics.objects.DrawableNode;
-import graphvisualisation.graphics.objects.WeightedDrawableEdge;
-import graphvisualisation.graphics.objects.WeightedDrawableNode;
+import graphvisualisation.graphics.objects.*;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.shape.Shape;
@@ -13,7 +10,7 @@ import java.util.ArrayList;
 public class Canvas extends Parent {
 
     public void clear() {
-        getChildren().clear();
+        getChildren().removeIf(node -> !(node instanceof Dot));
     }
 
     public boolean exists(DrawableNode node) {
@@ -52,7 +49,7 @@ public class Canvas extends Parent {
             }
         }
 
-        getChildren().clear();
+        clear();
         for (DrawableNode node : nodes) {
             getChildren().add(node);
         }

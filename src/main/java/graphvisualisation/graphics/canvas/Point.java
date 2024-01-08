@@ -7,6 +7,10 @@ import java.util.Random;
 public class Point extends Point2D {
     private static Random random = new Random();
 
+    public Point() {
+        this(0, 0);
+    }
+
     // todo: at the moment this class relies on extending Point2D, once I have finished the code I will extract the methods I need and remove the superclass
     public Point(double x, double y) {
         super(x, y);
