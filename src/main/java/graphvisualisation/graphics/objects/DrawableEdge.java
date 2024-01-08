@@ -16,9 +16,10 @@ public class DrawableEdge extends Parent {
     // todo: add system for making edges double ended rather than creating two edges, this would be to prevent overlapping
     //  lines over the arrows for bi-directional edges and allow for highlighting certain directions when weighted
     public static final Color LINE_COLOUR = Color.BLACK;
+    public static final double LINE_SIZE = 2d;
 
-    private final DrawableNode startNode;
-    private final DrawableNode endNode;
+    protected final DrawableNode startNode;
+    protected final DrawableNode endNode;
     protected final boolean directed;
     protected final Graph graph;
     protected final EdgeLine edgeLine;
@@ -150,18 +151,17 @@ public class DrawableEdge extends Parent {
         return endNode;
     }
 
-    private Point getNormalisedLineVector() {
+    protected Point getNormalisedLineVector() {
         return startNode.getCentre().getVectorTo(endNode.getCentre()).normalize();
     }
 
     public class Arrow extends Polygon {
 
-        public static final double WIDTH = 15d, HEIGHT = 30d;
+        public static final double WIDTH = LINE_SIZE * 7.5d, HEIGHT = LINE_SIZE * 15d;
 
         private Arrow() {
             connectToNode();
-            setStrokeWidth(0); // todo: for some reason some arrows overlap and enter into the node circles,
-                               //  currently doesn't happen when stroke width is 0 but the cause should be discovered
+            setStrokeWidth(0);
             setFill(LINE_COLOUR);
         }
 
@@ -203,7 +203,7 @@ public class DrawableEdge extends Parent {
     }
 
     public class EdgeLine extends Line {
-        public static final double WIDTH = 2d;
+        public static final double WIDTH = LINE_SIZE;
 
         private EdgeLine() {
             setStrokeLineCap(StrokeLineCap.BUTT);

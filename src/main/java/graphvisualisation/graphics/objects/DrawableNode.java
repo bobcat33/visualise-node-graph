@@ -16,6 +16,7 @@ public class DrawableNode extends StackPane {
             BORDER_WIDTH = 2d,
             FONT_SIZE = 30d,
             MIN_SPACE = DrawableEdge.Arrow.HEIGHT * 3;
+
     protected final Graph graph;
     private final int id;
     private final String name;
@@ -232,7 +233,7 @@ public class DrawableNode extends StackPane {
      * @param radius the new radius of the inner circle, this DOES NOT include the circle border width
      * @param maintainCentre true if the node should keep the same centre point after resizing
      */
-    private void setCircleRadius(double radius, boolean maintainCentre) {
+    protected void setCircleRadius(double radius, boolean maintainCentre) {
         Point centre = getCentre();
         border.setRadius(radius);
         if (maintainCentre) moveTo(centre);

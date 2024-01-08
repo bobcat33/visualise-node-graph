@@ -18,6 +18,7 @@ public class WeightedDrawableNode extends DrawableNode {
 
     private final String value;
     private final Weight weight;
+    private final Circle hoverMask;
     private HoverAction hoverAction;
 
     public WeightedDrawableNode(Graph graph, WeightedNode node) {
@@ -34,13 +35,8 @@ public class WeightedDrawableNode extends DrawableNode {
 
         this.weight = new Weight(this);
 
-        Circle hoverMask = new Circle(getNodeRadius(), Color.TRANSPARENT);
+        hoverMask = new Circle(getNodeRadius(), Color.TRANSPARENT);
         getChildren().add(hoverMask);
-
-//        ChangeListener<Boolean> hoverListener = (ignored1, ignored2, isHovered) -> {
-//            weight.setVisible(isHovered);
-//            handleHover(isHovered);
-//        };
 
         this.weight.setListener((ignored1, ignored2, isHovered) -> weight.setVisible(isHovered));
 
@@ -48,10 +44,12 @@ public class WeightedDrawableNode extends DrawableNode {
             weight.setVisible(isHovered);
             handleHover(isHovered);
         });
-        /*
-        border.hoverProperty().addListener(hoverListener);
+    }
 
-        textID.hoverProperty().addListener(hoverListener);*/
+    @Override
+    protected void setCircleRadius(double radius, boolean maintainCentre) {
+        super.setCircleRadius(radius, maintainCentre);
+        hoverMask.setRadius(getNodeRadius());
     }
 
     public String value() {

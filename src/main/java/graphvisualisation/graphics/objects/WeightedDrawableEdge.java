@@ -1,10 +1,12 @@
 package graphvisualisation.graphics.objects;
 
+import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -13,10 +15,12 @@ public class WeightedDrawableEdge extends DrawableEdge {
     public static final double
             WEIGHTED_CONTENT_BORDER_WIDTH = DrawableNode.BORDER_WIDTH,
             WEIGHTED_CONTENT_PADDING = 30d,
-            WEIGHTED_CONTENT_FONT_SIZE = DrawableNode.FONT_SIZE/2;
+            WEIGHTED_CONTENT_FONT_SIZE = DrawableNode.FONT_SIZE/2,
+            HOVER_MASK_WIDTH = Arrow.WIDTH;
 
     private final String value;
     private final Weight weight;
+    private final Polygon hoverMask = new Polygon();
     private HoverAction hoverAction;
 
     public WeightedDrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed, String value) throws InvalidEdgeException, UndefinedNodeException {
@@ -33,17 +37,48 @@ public class WeightedDrawableEdge extends DrawableEdge {
 
         this.weight = new Weight(this);
 
-        ChangeListener<Boolean> hoverListener = (ignored1, ignored2, isHovered) -> {
-            if (isHovering() == isHovered) {
-                weight.setVisible(isHovered);
-                if (this.hoverAction != null) this.hoverAction.handle(this, isHovered);
-            }
-        };
 
-        this.weight.setListener(hoverListener);
+        hoverMask.setStrokeWidth(0);
+        hoverMask.setFill(Color.TRANSPARENT);
+        connectHoverMask();
+        getChildren().add(hoverMask);
 
-        edgeLine.hoverProperty().addListener(hoverListener);
-        if (arrow != null) arrow.hoverProperty().addListener(hoverListener);
+        this.weight.setListener((ignored1, ignored2, isHovered) -> weight.setVisible(isHovered));
+
+        hoverMask.hoverProperty().addListener((ignored1, ignored2, isHovered) -> {
+            weight.setVisible(isHovered);
+            handleHover(isHovered);
+        });
+    }
+
+    @Override
+    public void reconnect() {
+        super.reconnect();
+        connectHoverMask();
+    }
+
+    private void connectHoverMask() {
+        hoverMask.getPoints().clear();
+
+        Point u = getNormalisedLineVector();
+
+        Point lineEnd = endNode.getCentre().sub(u.multiply(endNode.getNodeRadius()));
+        Point lineStart = startNode.getCentre().add(u.multiply(startNode.getNodeRadius()));
+        Point vectorHalfWidth = new Point(u.getY(), -u.getX()).multiply(HOVER_MASK_WIDTH/2);
+        Point startTop = lineStart.sub(vectorHalfWidth);
+        Point startBottom = lineStart.add(vectorHalfWidth);
+        Point endTop = lineEnd.sub(vectorHalfWidth);
+        Point endBottom = lineEnd.add(vectorHalfWidth);
+
+        addHoverMaskPoint(startTop);
+        addHoverMaskPoint(startBottom);
+        addHoverMaskPoint(endBottom);
+        addHoverMaskPoint(endTop);
+    }
+
+    private void addHoverMaskPoint(Point point) {
+        hoverMask.getPoints().add(point.getX());
+        hoverMask.getPoints().add(point.getY());
     }
 
     public String value() {
@@ -58,9 +93,8 @@ public class WeightedDrawableEdge extends DrawableEdge {
         this.hoverAction = hoverAction;
     }
 
-    private boolean isHovering() {
-        if (arrow != null) return edgeLine.isHover() || arrow.isHover();
-        return edgeLine.isHover();
+    private void handleHover(boolean isHovering) {
+        if (hoverAction != null) hoverAction.handle(this, isHovering);
     }
 
     public class Weight extends StackPane {
