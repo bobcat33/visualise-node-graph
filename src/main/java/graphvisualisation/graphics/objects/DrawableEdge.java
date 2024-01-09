@@ -31,6 +31,7 @@ public class DrawableEdge extends Parent {
         if (isHovering) edge.setColour(Color.RED);
         else edge.setColour(Color.BLACK);
     };
+    private DrawableEdge oppositeEdge = null;
     protected final EdgeLine edgeLine;
     protected Arrow arrow;
     private Color lineColour = Color.BLACK, arrowColour = Color.BLACK;
@@ -52,6 +53,15 @@ public class DrawableEdge extends Parent {
         this.directed = directed;
         this.graph = startNode.getGraph();
         this.hoverAction = hoverAction;
+
+        if (directed) {
+            this.oppositeEdge = graph.getEdge(endNode, startNode, true);
+            if (oppositeEdge != null) {
+                if (oppositeEdge.oppositeEdge != null) throw new InvalidEdgeException(startNode, endNode); // todo: error clarity
+                oppositeEdge.oppositeEdge = this;
+                oppositeEdge.reconnect();
+            }
+        }
 
         // Create the line between the nodes
         edgeLine = new EdgeLine();
@@ -118,7 +128,7 @@ public class DrawableEdge extends Parent {
         Point u = getNormalisedLineVector();
 
         Point lineEnd = endNode.getCentre().sub(u.multiply(endNode.getNodeRadius()));
-        Point lineStart = startNode.getCentre().add(u.multiply(startNode.getNodeRadius()));
+        Point lineStart = getStartPoint();
         Point vectorHalfWidth = new Point(u.getY(), -u.getX()).multiply(HOVER_MASK_WIDTH/2);
         Point startTop = lineStart.sub(vectorHalfWidth);
         Point startBottom = lineStart.add(vectorHalfWidth);
@@ -243,6 +253,13 @@ public class DrawableEdge extends Parent {
         return endNode;
     }
 
+    public Point getStartPoint() {
+        Point lineStart;
+        if (oppositeEdge == null) lineStart = startNode.getCentre().add(getNormalisedLineVector().multiply(startNode.getNodeRadius()));
+        else lineStart = startNode.getCentre().midpoint(endNode.getCentre());
+        return lineStart;
+    }
+
     protected Point getNormalisedLineVector() {
         return startNode.getCentre().getVectorTo(endNode.getCentre()).normalize();
     }
@@ -333,15 +350,13 @@ public class DrawableEdge extends Parent {
          * Connect the edge to its nodes.
          */
         private void connectToNodes() {
-            Point startCentre = startNode.getCentre();
             Point endCentre = endNode.getCentre();
-
-            double startRadius = startNode.getNodeRadius();
-            double endRadius = endNode.getNodeRadius();
 
             Point u = getNormalisedLineVector();
 
-            Point start = startCentre.add(u.multiply(startRadius));
+            Point start = getStartPoint();
+
+            double endRadius = endNode.getNodeRadius();
             Point end = endCentre.sub(u.multiply(endRadius));
 
             if (directed) end = end.sub(u.multiply(Arrow.HEIGHT));
@@ -391,7 +406,7 @@ public class DrawableEdge extends Parent {
             setEnd(end);
         }
 
-        public Point getStartPoint() {
+        public Point getStartingPoint() {
             return new Point(getStartX(), getStartY());
         }
 

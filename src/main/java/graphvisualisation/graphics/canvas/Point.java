@@ -91,6 +91,14 @@ public class Point extends Point2D {
         return new Point(point2.getX() - point1.getX(), point2.getY() - point1.getY());
     }
 
+    public Point midpoint(Point point) {
+        return midpoint(point.getX(), point.getY());
+    }
+
+    public Point midpoint(double x, double y) {
+        return new Point(x + (this.getX() - x) / 2d, y + (this.getY() - y) / 2d);
+    }
+
     public Point add(double v) {
         return new Point(getX() + v, getY() + v);
     }
