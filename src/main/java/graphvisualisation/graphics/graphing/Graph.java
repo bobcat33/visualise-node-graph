@@ -1,6 +1,6 @@
 package graphvisualisation.graphics.graphing;
 
-import graphvisualisation.data.graph.Matrix;
+import graphvisualisation.data.graph.GraphData;
 import graphvisualisation.data.graph.elements.Edge;
 import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.data.graph.elements.WeightedEdge;
@@ -31,11 +31,11 @@ public class Graph extends Parent {
     private double maxNodeRadius = 0;
 
     public Graph(GraphBuilder builder, double width, double height) throws InvalidFileException, FileNotFoundException, InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
-        this(builder, width, height, DataLoader.loadMatrix());
+        this(builder, width, height, DataLoader.loadGraphData());
     }
 
-    public Graph(GraphBuilder builder, double width, double height, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
-        this(builder, width, height, matrix.getNodes(), matrix.getEdges());
+    public Graph(GraphBuilder builder, double width, double height, GraphData graphData) throws InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
+        this(builder, width, height, graphData.getNodes(), graphData.getEdges());
     }
 
     public Graph(GraphBuilder builder, double width, double height, ArrayList<Node> nodes, ArrayList<Edge> edges) throws InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
@@ -48,8 +48,14 @@ public class Graph extends Parent {
 
         loadDrawableNodes(nodes);
         loadDrawableEdges(edges);
+    }
 
-        build();
+    public void freezeCanvas() {
+        canvas.freeze();
+    }
+
+    public void unfreezeCanvas() {
+        canvas.unfreeze();
     }
 
     private void loadDrawableNodes(ArrayList<Node> nodes) throws DuplicateNodeException {
@@ -165,6 +171,20 @@ public class Graph extends Parent {
         return getNode(node.id());
     }
 
+    public ArrayList<Point> getNodePositionSnapshot() {
+        ArrayList<Point> nodePositions = new ArrayList<>();
+        for (DrawableNode node : nodes) {
+            nodePositions.add(node.getCentre());
+        }
+        return nodePositions;
+    }
+
+    public void returnNodesToSnapshot(ArrayList<Point> snapshot) {
+        for (int i = 0; i < nodes.size(); i++) {
+            nodes.get(i).moveTo(snapshot.get(i));
+        }
+    }
+
     /**
      * Clear all nodes and edges from the canvas and draw the stored nodes and edges. Any other elements on the canvas
      * will remain.
@@ -226,7 +246,7 @@ public class Graph extends Parent {
     /**
      * Clear all visible nodes from the canvas.
      */
-    public void clear() {
+    public void clearCanvas() {
         canvas.clear();
     }
 

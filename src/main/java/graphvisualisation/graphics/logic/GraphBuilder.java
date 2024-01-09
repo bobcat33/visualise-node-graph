@@ -1,6 +1,5 @@
 package graphvisualisation.graphics.logic;
 
-import graphvisualisation.data.graph.Matrix;
 import graphvisualisation.graphics.graphing.Graph;
 import graphvisualisation.graphics.objects.DrawableEdge;
 import graphvisualisation.graphics.objects.DrawableNode;

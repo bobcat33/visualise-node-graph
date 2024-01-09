@@ -114,10 +114,6 @@ public class DrawableNode extends StackPane {
         graph.reconnectEdgesOf(this);
     }
 
-    public Point getPos() {
-        return new Point(xPos, yPos);
-    }
-
     /**
      * Determines if the node is undefined by doing a basic check of the stored elements and their types.
      * Cannot be fully relied on to determine if the DrawableNode has been correctly defined, can only
@@ -338,6 +334,24 @@ public class DrawableNode extends StackPane {
                 + "\nCentre: ("  + getCentre().getX() + ", " + getCentre().getY() + ")"
                 + "\nOrigin: ("  + getOrigin().getX() + ", " + getOrigin().getY() + ")"
         );
+    }
+
+    public DrawableNode createCopy() {
+        DrawableNode copy = new DrawableNode(graph, id, name);
+        adjustCopyValues(copy);
+        return copy;
+    }
+
+    private void adjustCopyValues(DrawableNode copy) {
+        // todo: add any other options like colour here
+        copy.setOrigin(getOrigin());
+        copy.setNodeRadius(getNodeRadius(), false);
+    }
+
+    protected WeightedDrawableNode createWeightedCopy(String value, WeightedDrawableNode.HoverAction hoverAction) {
+        WeightedDrawableNode copy = new WeightedDrawableNode(graph, id, name, value, hoverAction);
+        adjustCopyValues(copy);
+        return copy;
     }
 
     @Override

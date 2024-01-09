@@ -1,6 +1,6 @@
 package graphvisualisation.graphics.graphing;
 
-import graphvisualisation.data.graph.Matrix;
+import graphvisualisation.data.graph.GraphData;
 import graphvisualisation.data.storage.InvalidFileException;
 import graphvisualisation.graphics.logic.ForceDirectedBuilder;
 import graphvisualisation.graphics.objects.exceptions.DuplicateEdgeException;
@@ -13,10 +13,10 @@ import java.io.FileNotFoundException;
 public class ForceDirectedGraph extends Graph {
 
     public ForceDirectedGraph(double width, double height) throws InvalidFileException, FileNotFoundException, InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
-        super(new ForceDirectedBuilder(true), width, height);
+        super(new ForceDirectedBuilder(ForceDirectedBuilder.AnimationType.FULL_ANIMATION), width, height);
     }
 
-    public ForceDirectedGraph(double width, double height, Matrix matrix) throws InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
-        super(new ForceDirectedBuilder(true), width, height, matrix);
+    public ForceDirectedGraph(double width, double height, GraphData graphData) throws InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
+        super(new ForceDirectedBuilder(ForceDirectedBuilder.AnimationType.FULL_ANIMATION), width, height, graphData);
     }
 }

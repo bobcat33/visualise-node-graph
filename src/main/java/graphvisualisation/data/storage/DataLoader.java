@@ -1,6 +1,6 @@
 package graphvisualisation.data.storage;
 
-import graphvisualisation.data.graph.Matrix;
+import graphvisualisation.data.graph.GraphData;
 import graphvisualisation.data.graph.elements.Edge;
 import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.data.graph.elements.WeightedEdge;
@@ -10,8 +10,6 @@ import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Scanner;
 
 public class DataLoader {
@@ -19,82 +17,10 @@ public class DataLoader {
     private static final File edgeFile = new File("src/main/java/graphvisualisation/data/storage/Edges.txt");
     private static final String baseDelimiter = ";";
 
-    public static int getNumberOfNodes() throws FileNotFoundException, InvalidFileException {
-
-        Scanner fileScanner = new Scanner(edgeFile);
-
-        HashSet<Integer> nodes = new HashSet<>();
-        int x, y;
-
-        int lineNum = 0;
-        while (fileScanner.hasNextLine()) {
-
-            String[] line = fileScanner.nextLine().split(baseDelimiter);
-            lineNum++;
-
-            if (line.length != 2) throw new InvalidFileException(lineNum);
-
-            try {
-                x = Integer.parseInt(line[0]);
-                y = Integer.parseInt(line[1]);
-            } catch (NumberFormatException e) {
-                throw new InvalidFileException(lineNum);
-            }
-
-            nodes.add(x);
-            nodes.add(y);
-
-        }
-
-        return nodes.size();
-
-    }
-
-    @Deprecated
-    public static HashMap<Integer, ArrayList<Integer>> asAdjacencyMap(int size) throws FileNotFoundException, InvalidFileException {
-
-        Scanner fileScanner = new Scanner(edgeFile);
-
-        HashMap<Integer, ArrayList<Integer>> adjacencies = new HashMap<>();
-        for (int i = 0; i < size; i++) adjacencies.put(i, new ArrayList<>());
-
-        int lineNum = 0;
-        while (fileScanner.hasNextLine()) {
-            String[] line = fileScanner.nextLine().split(baseDelimiter);
-            lineNum++;
-
-            int x = -1, y = -1;
-
-            try {
-                x = Integer.parseInt(line[0]);
-                y = Integer.parseInt(line[1]);
-            } catch (NumberFormatException ignored) {}
-
-            if (x < 0 || x > size-1 || y < 0 || y > size-1) throw new InvalidFileException(lineNum);
-
-            if (!adjacencies.containsKey(x)) throw new InvalidFileException(lineNum);
-
-            ArrayList<Integer> successors = adjacencies.get(x);
-            int i;
-            for (i = 0; i < successors.size(); i++) {
-                if (y < successors.get(i)) break;
-            }
-            successors.add(i, y);
-
-        }
-
-        return adjacencies;
-    }
-
-    @Deprecated
-    public static HashMap<Integer, ArrayList<Integer>> loadFileAsAdjacencyMap() throws FileNotFoundException, InvalidFileException {
-        return asAdjacencyMap(getNumberOfNodes());
-    }
-
     // todo: require specified file paths / File objects
-    public static Matrix loadMatrix() throws FileNotFoundException, InvalidFileException {
+    public static GraphData loadGraphData() throws FileNotFoundException, InvalidFileException {
         ArrayList<Node> nodes = loadNodes();
-        return new Matrix(nodes, loadEdges(nodes));
+        return new GraphData(nodes, loadEdges(nodes));
     }
 
     public static ArrayList<Node> loadNodes() throws FileNotFoundException, InvalidFileException {

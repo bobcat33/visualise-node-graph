@@ -3,7 +3,7 @@ package graphvisualisation.graphics.objects.exceptions;
 import graphvisualisation.data.graph.elements.Node;
 import graphvisualisation.graphics.objects.DrawableNode;
 
-public class InvalidEdgeException extends Exception {
+public class InvalidEdgeException extends RuntimeException {
 
     public InvalidEdgeException(Node node1, Node node2) {
 

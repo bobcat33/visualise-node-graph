@@ -23,7 +23,6 @@ public class DrawableEdge extends Parent {
     protected final boolean directed;
     protected final Graph graph;
     protected final EdgeLine edgeLine;
-    private final Dot dot;
     protected Arrow arrow;
 
     public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
@@ -38,8 +37,6 @@ public class DrawableEdge extends Parent {
         this.endNode = endNode;
         this.directed = directed;
         this.graph = startNode.getGraph();
-        this.dot = new Dot();
-        graph.drawDot(dot);
 
         // Create the line between the nodes
         edgeLine = new EdgeLine();
@@ -143,11 +140,8 @@ public class DrawableEdge extends Parent {
 
         // If the point is not on the line then the node does not intersect
         if (!(d1 + d2 >= lineLength-0.01 && d1 + d2 <= lineLength+0.01)) {
-//            this.dot.setVisible(false);
             return null;
         }
-//        this.dot.setVisible(true);
-        this.dot.move(closest);
         return closest;
     }
 
@@ -176,6 +170,22 @@ public class DrawableEdge extends Parent {
 
     protected Point getNormalisedLineVector() {
         return startNode.getCentre().getVectorTo(endNode.getCentre()).normalize();
+    }
+
+    public DrawableEdge createCopyWith(DrawableNode startNode, DrawableNode endNode) {
+        DrawableEdge copy = new DrawableEdge(startNode, endNode, directed);
+        adjustCopyValues(copy);
+        return copy;
+    }
+
+    private void adjustCopyValues(DrawableEdge copy) {
+        // todo: add any other values like color
+    }
+
+    protected WeightedDrawableEdge createWeightedCopyWith(DrawableNode startNode, DrawableNode endNode, String value, WeightedDrawableEdge.HoverAction hoverAction) {
+        WeightedDrawableEdge copy = new WeightedDrawableEdge(startNode, endNode, directed, value, hoverAction);
+        adjustCopyValues(copy);
+        return copy;
     }
 
     public class Arrow extends Polygon {

@@ -23,7 +23,7 @@ public class RandomBuilder implements GraphBuilder {
 
         while (!edgesValid && attempts < attemptLimit) {
             System.out.println("Generating canvas, attempt " + (attempts + 1));
-            graph.clear();
+            graph.clearCanvas();
 
             graph.resizeNodes(true, false);
             for (DrawableNode node : nodes) node.moveTo(graph.generatePoint());

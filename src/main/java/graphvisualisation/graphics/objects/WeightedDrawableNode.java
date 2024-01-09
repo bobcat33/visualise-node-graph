@@ -16,29 +16,39 @@ public class WeightedDrawableNode extends DrawableNode {
             WEIGHTED_CONTENT_PADDING = 30d,
             WEIGHTED_CONTENT_FONT_SIZE = FONT_SIZE/2;
 
+    private static final HoverAction defaultHoverAction = (actionNode, isHovered) -> {
+        if (isHovered) System.out.println("Hovered over node " + actionNode.name());
+        else System.out.println("Moved off node " + actionNode.name());
+    };
+
     private final String value;
     private final Weight weight;
     private final Circle hoverMask;
     private HoverAction hoverAction;
 
     public WeightedDrawableNode(Graph graph, WeightedNode node) {
-        this(graph, node, (actionNode, isHovered) -> {
-            if (isHovered) System.out.println("Hovered over node " + actionNode.name());
-            else System.out.println("Moved off node " + actionNode.name());
-        });
+        this(graph, node, defaultHoverAction);
     }
 
     public WeightedDrawableNode(Graph graph, WeightedNode node, HoverAction hoverAction) {
-        super(graph, node);
-        this.value = node.value();
+        this(graph, node.id(), node.name(), node.value(), hoverAction);
+    }
+
+    public WeightedDrawableNode(Graph graph, int id, String name, String value) {
+        this(graph, id, name, value, defaultHoverAction);
+    }
+
+    public WeightedDrawableNode(Graph graph, int id, String name, String value, HoverAction hoverAction) {
+        super(graph, id, name);
+        this.value = value;
         this.hoverAction = hoverAction;
 
-        this.weight = new Weight(this);
+        weight = new Weight(this);
 
         hoverMask = new Circle(getNodeRadius(), Color.TRANSPARENT);
         getChildren().add(hoverMask);
 
-        this.weight.setListener((ignored1, ignored2, isHovered) -> weight.setVisible(isHovered));
+        weight.setListener((ignored1, ignored2, isHovered) -> weight.setVisible(isHovered));
 
         hoverMask.hoverProperty().addListener((ignored1, ignored2, isHovered) -> {
             weight.setVisible(isHovered);
@@ -66,6 +76,11 @@ public class WeightedDrawableNode extends DrawableNode {
 
     private void handleHover(boolean isHovering) {
         if (hoverAction != null) hoverAction.handle(this, isHovering);
+    }
+
+    @Override
+    public WeightedDrawableNode createCopy() {
+        return createWeightedCopy(value, hoverAction);
     }
 
     public class Weight extends StackPane {

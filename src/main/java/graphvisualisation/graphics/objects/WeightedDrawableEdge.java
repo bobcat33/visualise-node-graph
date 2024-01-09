@@ -52,6 +52,11 @@ public class WeightedDrawableEdge extends DrawableEdge {
     }
 
     @Override
+    public WeightedDrawableEdge createCopyWith(DrawableNode startNode, DrawableNode endNode) {
+        return createWeightedCopyWith(startNode, endNode, value, hoverAction);
+    }
+
+    @Override
     public void reconnect() {
         super.reconnect();
         connectHoverMask();

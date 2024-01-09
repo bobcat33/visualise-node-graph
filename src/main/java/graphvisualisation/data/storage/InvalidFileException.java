@@ -1,6 +1,6 @@
 package graphvisualisation.data.storage;
 
-public class InvalidFileException extends Exception {
+public class InvalidFileException extends RuntimeException {
 
     public InvalidFileException() {
         super("File contains invalid properties.");

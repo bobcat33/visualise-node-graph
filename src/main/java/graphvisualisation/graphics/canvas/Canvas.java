@@ -8,6 +8,58 @@ import javafx.scene.shape.Shape;
 import java.util.ArrayList;
 
 public class Canvas extends Parent {
+    private boolean frozen = false;
+    private final ArrayList<Node> frozenNodes = new ArrayList<>();
+
+    public void setFrozen(boolean frozen) {
+        if (frozen) freeze();
+        else unfreeze();
+    }
+
+    public void freeze() {
+        if (frozen) return;
+        frozen = true;
+        frozenNodes.clear();
+        // Store the actual objects of the frozen nodes so that they can be re-added to the canvas when unfrozen
+        frozenNodes.addAll(getChildren());
+        // Remove all objects from the canvas
+        clear();
+
+        // Store a copy of each DrawableNode on the canvas and draw them
+        ArrayList<DrawableNode> copiedNodes = new ArrayList<>();
+        ArrayList<DrawableEdge> existingEdges = new ArrayList<>();
+        for (Node frozenNode : frozenNodes) {
+            if (frozenNode instanceof DrawableNode node) {
+                DrawableNode copiedNode = node.createCopy();
+                copiedNodes.add(copiedNode);
+                draw(copiedNode);
+            }
+            else if (frozenNode instanceof DrawableEdge edge) existingEdges.add(edge);
+        }
+
+        // For every existing edge, find its copied nodes and create a copy of the edge connecting the copied nodes
+        for (DrawableEdge existingEdge : existingEdges) {
+            DrawableNode startNode = null;
+            DrawableNode endNode = null;
+            for (DrawableNode copiedNode : copiedNodes) {
+                if (copiedNode.id() == existingEdge.startNode().id()) startNode = copiedNode;
+                else if (copiedNode.id() == existingEdge.endNode().id()) endNode = copiedNode;
+            }
+
+            // Draw the copied edge
+            draw(existingEdge.createCopyWith(startNode, endNode));
+        }
+    }
+
+    public void unfreeze() {
+        if (!frozen) return;
+        frozen = false;
+        clear();
+
+        getChildren().addAll(frozenNodes);
+        resetZIndex();
+        frozenNodes.clear();
+    }
 
     public void clear() {
         getChildren().removeIf(node -> !(node instanceof Dot));
