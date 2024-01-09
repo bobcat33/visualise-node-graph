@@ -1,17 +1,19 @@
-directed:unweighted
+directed:weighted
 " "
-1 5
-4 3
-2 1
-7 6
-8 5
-9 5
-0 1
-6 0
-7 4
-9 1
-1 8
-3 9
-3 0
-4 2
-6 3
+";"
+1 5;1 and 5 weight value
+5 1;5 and 1 weight value
+4 3;4 and 3 weight value
+2 1;2 and 1 weight value
+7 6;7 and 6 weight value
+8 5;8 and 5 weight value
+9 5;9 and 5 weight value
+0 1;0 and 1 weight value
+6 0;6 and 0 weight value
+7 4;7 and 4 weight value
+9 1;9 and 1 weight value
+1 8;1 and 8 weight value
+3 9;3 and 9 weight value
+3 0;3 and 0 weight value
+4 2;4 and 2 weight value
+6 3;6 and 3 weight value

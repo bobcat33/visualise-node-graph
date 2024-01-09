@@ -131,6 +131,17 @@ public class Graph extends Parent {
         return false;
     }
 
+    public boolean isEdge(DrawableNode node1, DrawableNode node2, boolean directed) {
+        return getEdge(node1, node2, directed) != null/* || (!directed && getEdge(node2, node1) != null)*/;
+    }
+
+    public DrawableEdge getEdge(DrawableNode node1, DrawableNode node2, boolean directed) {
+        for (DrawableEdge edge : edges)
+            if ((edge.startNode().equals(node1) && edge.endNode().equals(node2))
+                    || (!directed && edge.startNode().equals(node2) && edge.endNode().equals(node1))) return edge;
+        return null;
+    }
+
     public void draw(DrawableNode node) {
         canvas.draw(node);
     }
@@ -217,7 +228,6 @@ public class Graph extends Parent {
     public void resizeNode(DrawableNode node, boolean matchLargest, boolean maintainCentre) {
         if (matchLargest) node.matchSize(maintainCentre);
         else node.resetSize(maintainCentre);
-        reconnectEdgesOf(node);
     }
 
     /**

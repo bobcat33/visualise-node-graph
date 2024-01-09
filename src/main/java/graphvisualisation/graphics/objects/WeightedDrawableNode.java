@@ -1,11 +1,11 @@
 package graphvisualisation.graphics.objects;
 
 import graphvisualisation.data.graph.elements.WeightedNode;
+import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.graphing.Graph;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -16,21 +16,14 @@ public class WeightedDrawableNode extends DrawableNode {
             WEIGHTED_CONTENT_PADDING = 30d,
             WEIGHTED_CONTENT_FONT_SIZE = FONT_SIZE/2;
 
-    private static final HoverAction defaultHoverAction = (actionNode, isHovered) -> {
-        if (isHovered) System.out.println("Hovered over node " + actionNode.name());
-        else System.out.println("Moved off node " + actionNode.name());
-    };
-
     private final String value;
     private final Weight weight;
-    private final Circle hoverMask;
-    private HoverAction hoverAction;
 
     public WeightedDrawableNode(Graph graph, WeightedNode node) {
         this(graph, node, defaultHoverAction);
     }
 
-    public WeightedDrawableNode(Graph graph, WeightedNode node, HoverAction hoverAction) {
+    public WeightedDrawableNode(Graph graph, WeightedNode node, HoverAction<DrawableNode> hoverAction) {
         this(graph, node.id(), node.name(), node.value(), hoverAction);
     }
 
@@ -38,22 +31,20 @@ public class WeightedDrawableNode extends DrawableNode {
         this(graph, id, name, value, defaultHoverAction);
     }
 
-    public WeightedDrawableNode(Graph graph, int id, String name, String value, HoverAction hoverAction) {
-        super(graph, id, name);
+    public WeightedDrawableNode(Graph graph, int id, String name, String value, HoverAction<DrawableNode> hoverAction) {
+        super(graph, id, name, hoverAction);
         this.value = value;
-        this.hoverAction = hoverAction;
 
         weight = new Weight(this);
-
-        hoverMask = new Circle(getNodeRadius(), Color.TRANSPARENT);
-        getChildren().add(hoverMask);
-
         weight.setListener((ignored1, ignored2, isHovered) -> weight.setVisible(isHovered));
 
-        hoverMask.hoverProperty().addListener((ignored1, ignored2, isHovered) -> {
-            weight.setVisible(isHovered);
-            handleHover(isHovered);
-        });
+        hoverMask.hoverProperty().addListener((ignored1, ignored2, isHovered) -> weight.setVisible(isHovered));
+    }
+
+    @Override
+    protected void setOrigin(double x, double y) {
+        super.setOrigin(x, y);
+        weight.moveNear(this);
     }
 
     @Override
@@ -70,17 +61,9 @@ public class WeightedDrawableNode extends DrawableNode {
         return weight;
     }
 
-    public void setHoverAction(HoverAction hoverAction) {
-        this.hoverAction = hoverAction;
-    }
-
-    private void handleHover(boolean isHovering) {
-        if (hoverAction != null) hoverAction.handle(this, isHovering);
-    }
-
     @Override
     public WeightedDrawableNode createCopy() {
-        return createWeightedCopy(value, hoverAction);
+        return createWeightedCopy(value);
     }
 
     public class Weight extends StackPane {
@@ -119,6 +102,62 @@ public class WeightedDrawableNode extends DrawableNode {
             return node;
         }
 
+        public void moveNear(DrawableNode node) {
+
+        }
+
+        public void moveWithinBoundsTo(double x, double y) {
+            moveWithinBoundsTo(x, y, false, false);
+        }
+
+        private void moveWithinBoundsTo(double x, double y, boolean hasCrossedAlongY, boolean hasCrossedAlongX) {
+            moveTo(x, y);
+            double graphHeight = graph.height();
+            double graphWidth = graph.width();
+
+            // Find if the weight crosses any of the graph boundaries and reposition appropriately
+            boolean moved = false;
+
+            // If weight crosses the top of the bounds
+            if (y <= 0 || getEdgePointTowards(x, 0).getY() <= 0) {
+                y = getNodeRadius();
+                moved = true;
+            }
+            // If weight crosses the bottom of the bounds
+            else if (y >= graphHeight || getEdgePointTowards(x, graphHeight).getY() >= graphHeight) {
+                y = graphHeight - getNodeRadius();
+                moved = true;
+            }
+            // If weight crosses the left of the bounds
+            if (x <= 0 || getEdgePointTowards(0, y).getX() <= 0) {
+                x = getNodeRadius();
+                moved = true;
+            }
+            // If weight crosses the right of the bounds
+            else if (x >= graphWidth || getEdgePointTowards(graphWidth, y).getX() >= graphWidth) {
+                x = graphWidth - getNodeRadius();
+                moved = true;
+            }
+
+            // If the weight was found to cross any bounds, move it to the new position within bounds
+            if (moved) {
+                moveTo(x, y);
+            }
+        }
+
+        public void moveWithinBoundsTo(Point point) {
+            moveWithinBoundsTo(point.getX(), point.getY());
+        }
+
+        public void moveTo(Point point) {
+            moveTo(point.getX(), point.getY());
+        }
+
+        public void moveTo(double x, double y) {
+            setLayoutX(x);
+            setLayoutY(y);
+        }
+
         @Override
         public boolean equals(Object o) {
             if (o == null) return false;
@@ -126,9 +165,5 @@ public class WeightedDrawableNode extends DrawableNode {
             if (o instanceof Weight nodeWeight) return node.equals(nodeWeight.node);
             return false;
         }
-    }
-
-    public interface HoverAction {
-        void handle(WeightedDrawableNode node, boolean isHovering);
     }
 }

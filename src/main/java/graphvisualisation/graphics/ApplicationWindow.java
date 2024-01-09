@@ -44,17 +44,18 @@ public class ApplicationWindow {
 
 //        Graph graph = new Graph(new RandomBuilder(), WIDTH, HEIGHT, DataLoader.loadGraphData());
 //        ForceDirectedGraph graph = new ForceDirectedGraph(WIDTH, HEIGHT, DataLoader.loadGraphData());
-        Graph graph = new Graph((visualGraph, graphNodes, graphEdges) -> {
-            visualGraph.resizeNodes(true, true);
-            Random r = new Random();
-            for (DrawableNode node : graphNodes) {
-//                double radius = visualGraph.maxNodeRadius();
-//                node.moveWithinBoundsTo(new Point(radius * 2 * (node.id() + 1), radius * 2 * r.nextInt(9) + radius));
-                node.moveWithinBoundsTo(visualGraph.generatePoint());
-            }
-            visualGraph.draw();
-        }, WIDTH, HEIGHT, nodes, edges);
+//        Graph graph = new Graph((visualGraph, graphNodes, graphEdges) -> {
+//            visualGraph.resizeNodes(true, true);
+//            Random r = new Random();
+//            for (DrawableNode node : graphNodes) {
+////                double radius = visualGraph.maxNodeRadius();
+////                node.moveWithinBoundsTo(new Point(radius * 2 * (node.id() + 1), radius * 2 * r.nextInt(9) + radius));
+//                node.moveWithinBoundsTo(visualGraph.generatePoint());
+//            }
+//            visualGraph.draw();
+//        }, WIDTH, HEIGHT);
 
+        Graph graph = new Graph(new ForceDirectedBuilder(ForceDirectedBuilder.AnimationType.FULL_ANIMATION, true), WIDTH, HEIGHT);
 
         Group root = new Group();
         scene = new Scene(root, WIDTH, HEIGHT);
@@ -62,9 +63,9 @@ public class ApplicationWindow {
 
         graph.build();
 
-        new Timeline(new KeyFrame(Duration.seconds(3), (actionEvent) -> {
-                graph.buildWith(new ForceDirectedBuilder(ForceDirectedBuilder.AnimationType.FULL_ANIMATION, false));
-        })).play();
+//        new Timeline(new KeyFrame(Duration.seconds(3), (actionEvent) -> {
+//                graph.buildWith(new ForceDirectedBuilder(ForceDirectedBuilder.AnimationType.FULL_ANIMATION, false));
+//        })).play();
     }
 
     public Scene getScene() {

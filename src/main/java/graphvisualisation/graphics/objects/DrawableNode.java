@@ -12,7 +12,7 @@ import javafx.scene.text.Text;
 import java.util.ArrayList;
 
 public class DrawableNode extends StackPane {
-    public static final double NODE_PADDING = 20d,
+    public static final double NODE_PADDING = 30d,
             BORDER_WIDTH = 2d,
             FONT_SIZE = 30d,
             MIN_SPACE = DrawableEdge.Arrow.HEIGHT * 3;
@@ -21,27 +21,48 @@ public class DrawableNode extends StackPane {
     private final int id;
     private final String name;
     private double xPos = 0, yPos = 0;
+    private Color borderColour = Color.BLACK;
+    private Color backgroundColour = Color.WHITE;
+    private Color textColour = Color.BLACK;
     protected final Circle border;
     protected final Text textID;
+    protected final Circle hoverMask;
+    protected HoverAction<DrawableNode> hoverAction;
+    protected static final HoverAction<DrawableNode> defaultHoverAction = (node, isHovered) -> {
+        if (!(node instanceof WeightedDrawableNode)) return;
+        if (isHovered) node.setColours(Color.DARKRED, Color.rgb(255, 118, 118, 1), Color.DARKRED);
+//        if (isHovered) node.setColours(Color.DARKBLUE, Color.rgb(173, 216, 230, 1), Color.DARKBLUE);
+        else node.setColours(Color.BLACK, Color.TRANSPARENT, Color.BLACK);
+    };
 
     public DrawableNode(Graph graph, Node node) {
         this(graph, node.id(), node.name());
     }
 
+    public DrawableNode(Graph graph, Node node, HoverAction<DrawableNode> hoverAction) {
+        this(graph, node.id(), node.name(), hoverAction);
+    }
+
     public DrawableNode(Graph graph, int id, String name) {
+        this(graph, id, name, defaultHoverAction);
+    }
+
+    public DrawableNode(Graph graph, int id, String name, HoverAction<DrawableNode> hoverAction) {
         this.graph = graph;
         this.id = id;
         this.name = name;
+        this.hoverAction = hoverAction;
 
         // Create the circle used for the border around the node
         border = new Circle();
-        border.setFill(Color.WHITE);
+        border.setFill(backgroundColour);
         border.setStrokeWidth(BORDER_WIDTH);
-        border.setStroke(Color.BLACK);
+        border.setStroke(borderColour);
 
         // Create the text object that displays the ID of the node
         textID = new Text(name);
         textID.setFont(new Font(FONT_SIZE));
+        textID.setStroke(textColour);
 
         // Define the radius of the border circle using the size of the text and NODE_PADDING
         double radius = getBaseRadius();
@@ -49,11 +70,55 @@ public class DrawableNode extends StackPane {
 
         graph.updateMaxRadius(this);
 
-        getChildren().addAll(border, textID);
+        // Create the hover mask
+        hoverMask = new Circle(getNodeRadius(), Color.TRANSPARENT);
+        hoverMask.hoverProperty().addListener((ignored1, ignored2, isHovered) -> handleHover(isHovered));
+        getChildren().addAll(border, textID, hoverMask);
+    }
+
+    public void setHoverAction(HoverAction<DrawableNode> hoverAction) {
+        this.hoverAction = hoverAction;
+    }
+
+    private void handleHover(boolean isHovering) {
+        if (hoverAction != null) hoverAction.handle(this, isHovering);
     }
 
     public void draw() {
         graph.draw(this);
+    }
+
+    public void setBorderColour(Color colour) {
+        border.setStroke(colour);
+        borderColour = colour;
+    }
+
+    public Color getBorderColour() {
+        return borderColour;
+    }
+
+    public void setBackgroundColour(Color colour) {
+        border.setFill(colour);
+        backgroundColour = colour;
+    }
+
+    public Color getBackgroundColour() {
+        return backgroundColour;
+    }
+
+    public void setTextColour(Color colour) {
+        textID.setStroke(colour);
+        textColour = colour;
+    }
+
+    public Color getTextColour() {
+        return textColour;
+    }
+
+    public void setColours(Color borderColour, Color backgroundColour, Color textColour) {
+        if (borderColour != null) setBorderColour(borderColour);
+        if (backgroundColour != null) setBackgroundColour(backgroundColour);
+        if (textColour != null) setTextColour(textColour);
     }
 
     public void moveWithinBoundsTo(Point point) {
@@ -114,16 +179,6 @@ public class DrawableNode extends StackPane {
         graph.reconnectEdgesOf(this);
     }
 
-    /**
-     * Determines if the node is undefined by doing a basic check of the stored elements and their types.
-     * Cannot be fully relied on to determine if the DrawableNode has been correctly defined, can only
-     * properly determine if the node is undefined.
-     * @return true if the DrawableNode is undefined.
-     */
-    public boolean isUndefined() {
-        return getChildren().size() != 2 || !(getChildren().get(0) instanceof Circle) || !(getChildren().get(1) instanceof Text);
-    }
-
     public Graph getGraph() {
         return graph;
     }
@@ -170,7 +225,7 @@ public class DrawableNode extends StackPane {
      * Set the position of the node, defines the top left corner co-ordinates.
      * @see #setOrigin(double, double)
      */
-    public void setOrigin(Point point) {
+    private void setOrigin(Point point) {
         setOrigin(point.getX(), point.getY());
     }
 
@@ -178,7 +233,7 @@ public class DrawableNode extends StackPane {
      * Set the position of the node, defines the top left corner co-ordinates.
      * @see #setOrigin(Point)
      */
-    public void setOrigin(double x, double y) {
+    protected void setOrigin(double x, double y) {
         xPos = x;
         yPos = y;
         setLayoutX(x);
@@ -188,7 +243,7 @@ public class DrawableNode extends StackPane {
     /**
      * Get the position of the node's top left corner.
      */
-    public Point getOrigin() {
+    private Point getOrigin() {
         return new Point(xPos, yPos);
     }
 
@@ -233,6 +288,7 @@ public class DrawableNode extends StackPane {
         Point centre = getCentre();
         border.setRadius(radius);
         if (maintainCentre) moveTo(centre);
+        graph.reconnectEdgesOf(this);
     }
 
     private void setNodeRadius(double radius) {
@@ -343,12 +399,13 @@ public class DrawableNode extends StackPane {
     }
 
     private void adjustCopyValues(DrawableNode copy) {
-        // todo: add any other options like colour here
+        // todo: add any other options here
         copy.setOrigin(getOrigin());
         copy.setNodeRadius(getNodeRadius(), false);
+        copy.setColours(borderColour, backgroundColour, textColour);
     }
 
-    protected WeightedDrawableNode createWeightedCopy(String value, WeightedDrawableNode.HoverAction hoverAction) {
+    protected WeightedDrawableNode createWeightedCopy(String value) {
         WeightedDrawableNode copy = new WeightedDrawableNode(graph, id, name, value, hoverAction);
         adjustCopyValues(copy);
         return copy;

@@ -16,19 +16,33 @@ public class DrawableEdge extends Parent {
     // todo: add system for making edges double ended rather than creating two edges, this would be to prevent overlapping
     //  lines over the arrows for bi-directional edges and allow for highlighting certain directions when weighted
     public static final Color LINE_COLOUR = Color.BLACK;
-    public static final double LINE_SIZE = 2d;
+    public static final double
+            LINE_SIZE = 2d,
+            HOVER_MASK_WIDTH = Arrow.WIDTH;
 
     protected final DrawableNode startNode;
     protected final DrawableNode endNode;
     protected final boolean directed;
     protected final Graph graph;
+    protected final Polygon hoverMask = new Polygon();
+    protected HoverAction<DrawableEdge> hoverAction;
+    protected static final HoverAction<DrawableEdge> defaultHoverAction = (edge, isHovering) -> {
+        if (!(edge instanceof WeightedDrawableEdge)) return;
+        if (isHovering) edge.setColour(Color.RED);
+        else edge.setColour(Color.BLACK);
+    };
     protected final EdgeLine edgeLine;
     protected Arrow arrow;
+    private Color lineColour = Color.BLACK, arrowColour = Color.BLACK;
 
-    public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
+    public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) {
+        this(startNode, endNode, directed, defaultHoverAction);
+    }
+
+    public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed, HoverAction<DrawableEdge> hoverAction) throws UndefinedNodeException, InvalidEdgeException {
         // Ensure that both the start node and the end node are defined correctly
-        if (startNode == null || startNode.isUndefined()) throw new UndefinedNodeException(startNode);
-        if (endNode == null || endNode.isUndefined()) throw new UndefinedNodeException(endNode);
+        if (startNode == null) throw new UndefinedNodeException(null);
+        if (endNode == null) throw new UndefinedNodeException(null);
         // Make sure the start and end nodes are different
         if (startNode.equals(endNode) || !startNode.isOnSameGraph(endNode))
             throw new InvalidEdgeException(startNode, endNode);
@@ -37,6 +51,7 @@ public class DrawableEdge extends Parent {
         this.endNode = endNode;
         this.directed = directed;
         this.graph = startNode.getGraph();
+        this.hoverAction = hoverAction;
 
         // Create the line between the nodes
         edgeLine = new EdgeLine();
@@ -48,25 +63,85 @@ public class DrawableEdge extends Parent {
             arrow = new Arrow();
             getChildren().add(arrow);
         }
+
+        // Create the hover mask
+        hoverMask.setStrokeWidth(0);
+        hoverMask.setFill(Color.TRANSPARENT);
+        hoverMask.hoverProperty().addListener((ignored1, ignored2, isHovered) -> handleHover(isHovered));
+        connectHoverMask();
+        getChildren().add(hoverMask);
     }
 
     public void draw() {
         graph.draw(this);
     }
 
-    // todo: possible split to allow changing stroke and fill
     public void setColour(Color colour) {
-        edgeLine.setStroke(colour);
-        if (arrow != null) arrow.setFill(colour);
+        setColours(colour, colour);
     }
 
-    // todo: ensure that this method is always called when nodes are moved/resized
+    public void setColours(Color lineColour, Color arrowColour) {
+        if (lineColour != null) setLineColour(lineColour);
+        if (arrowColour != null) setArrowColour(arrowColour);
+    }
+
+    public void setLineColour(Color colour) {
+        edgeLine.setStroke(colour);
+        lineColour = colour;
+    }
+
+    public Color getLineColour() {
+        return lineColour;
+    }
+
+    public void setArrowColour(Color colour) {
+        if (arrow != null) arrow.setFill(colour);
+        arrowColour = colour;
+    }
+
+    public Color getArrowColour() {
+        return arrowColour;
+    }
+
     /**
      * Reconnect the edge to its nodes. If either node changes in size or position this method should be called.
      */
     public void reconnect() {
         edgeLine.reconnect();
         if (directed && arrow != null) arrow.reconnect();
+        connectHoverMask();
+    }
+
+    private void connectHoverMask() {
+        hoverMask.getPoints().clear();
+
+        Point u = getNormalisedLineVector();
+
+        Point lineEnd = endNode.getCentre().sub(u.multiply(endNode.getNodeRadius()));
+        Point lineStart = startNode.getCentre().add(u.multiply(startNode.getNodeRadius()));
+        Point vectorHalfWidth = new Point(u.getY(), -u.getX()).multiply(HOVER_MASK_WIDTH/2);
+        Point startTop = lineStart.sub(vectorHalfWidth);
+        Point startBottom = lineStart.add(vectorHalfWidth);
+        Point endTop = lineEnd.sub(vectorHalfWidth);
+        Point endBottom = lineEnd.add(vectorHalfWidth);
+
+        addHoverMaskPoint(startTop);
+        addHoverMaskPoint(startBottom);
+        addHoverMaskPoint(endBottom);
+        addHoverMaskPoint(endTop);
+    }
+
+    private void addHoverMaskPoint(Point point) {
+        hoverMask.getPoints().add(point.getX());
+        hoverMask.getPoints().add(point.getY());
+    }
+
+    public void setHoverAction(HoverAction<DrawableEdge> hoverAction) {
+        this.hoverAction = hoverAction;
+    }
+
+    protected void handleHover(boolean isHovering) {
+        if (hoverAction != null) hoverAction.handle(this, isHovering);
     }
 
     /**
@@ -179,10 +254,10 @@ public class DrawableEdge extends Parent {
     }
 
     private void adjustCopyValues(DrawableEdge copy) {
-        // todo: add any other values like color
+        copy.setColours(lineColour, arrowColour);
     }
 
-    protected WeightedDrawableEdge createWeightedCopyWith(DrawableNode startNode, DrawableNode endNode, String value, WeightedDrawableEdge.HoverAction hoverAction) {
+    protected WeightedDrawableEdge createWeightedCopyWith(DrawableNode startNode, DrawableNode endNode, String value) {
         WeightedDrawableEdge copy = new WeightedDrawableEdge(startNode, endNode, directed, value, hoverAction);
         adjustCopyValues(copy);
         return copy;
