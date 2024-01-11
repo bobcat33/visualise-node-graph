@@ -88,6 +88,7 @@ public class WeightedDrawableEdge extends DrawableEdge {
         @Override
         public boolean equals(Object o) {
             if (o == null) return false;
+            if (o == this) return true;
             if (o instanceof WeightedDrawableEdge compareEdge) return edge.equals(compareEdge);
             if (o instanceof Weight edgeWeight) return edge.equals(edgeWeight.edge);
             return false;

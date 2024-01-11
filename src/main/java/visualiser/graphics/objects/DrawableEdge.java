@@ -427,9 +427,9 @@ public class DrawableEdge extends Parent {
     }
 
     /**
-     * Compares this edge with the specified object. The argument must not be null and must be an {@code DrawableEdge} object.
-     * To return true they must both have same edge type (directed/undirected) and if directed then the start and
-     * end nodes must be the same, if undirected then the start and end nodes must either be the same or opposing.
+     * Compares this edge with the specified object. The argument must not be null and must be a {@code DrawableEdge}
+     * object. To return true they must both have same edge type (directed/undirected) and if directed then the start
+     * and end nodes must be the same, if undirected then the start and end nodes must either be the same or opposing.
      * <br/>The rules are as follows:
      * <ul>
      *     <li>a -> b == a -> b&nbsp; = &nbsp;true</li>
@@ -440,7 +440,7 @@ public class DrawableEdge extends Parent {
      * </ul>
      * Where -> denotes a directed edge (left to right) and --- denotes an undirected edge.
      * @param o the object to compare this edge against
-     * @return true if the given object represents an {@code DrawableEdge} equivalent to this edge, false otherwise
+     * @return true if the given object represents a {@code DrawableEdge} equivalent to this edge, false otherwise
      */
     @Override
     public boolean equals(Object o) {

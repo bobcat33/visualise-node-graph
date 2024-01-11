@@ -1,3 +1,4 @@
+// Directed weighted graph of nodes 0 to 9 and their weights as the edge name
 directed:weighted
 " "
 ";"

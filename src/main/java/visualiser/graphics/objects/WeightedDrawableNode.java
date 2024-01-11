@@ -161,6 +161,7 @@ public class WeightedDrawableNode extends DrawableNode {
         @Override
         public boolean equals(Object o) {
             if (o == null) return false;
+            if (o == this) return true;
             if (o instanceof WeightedDrawableNode compareNode) return node.equals(compareNode);
             if (o instanceof Weight nodeWeight) return node.equals(nodeWeight.node);
             return false;

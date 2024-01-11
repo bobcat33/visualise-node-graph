@@ -73,19 +73,32 @@ public class ApplicationWindow {
         graph.build();
     }
 
+    /**
+     * @return the scene of the application
+     */
     public Scene getScene() {
         return scene;
     }
 
+    /**
+     * Enable the buttons.
+     */
     private void enableButtons() {
         enableButtons(true);
     }
 
+    /**
+     * Enable the buttons.
+     * @param includePlayButton if false then all buttons except the play button are enabled
+     */
     private void enableButtons(boolean includePlayButton) {
         if (includePlayButton) playButton.setDisable(false);
         resetButton.setDisable(false);
     }
 
+    /**
+     * Disable the buttons.
+     */
     private void disableButtons() {
         playButton.setDisable(true);
         resetButton.setDisable(true);

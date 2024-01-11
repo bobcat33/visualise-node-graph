@@ -17,7 +17,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
     private final double repulsionConstant = 10000d; // todo: make scalable based on node size and idealEdgeLength
     private final double sideRepulsionConstant = 1000d;
     private final double springConstant = 1d; // todo: make scalable based on idealEdgeLength
-    private final double nodeCollisionForce = 100d;
+    private final double nodeCollisionForce = 1d;
     private final double idealEdgeLength = DrawableNode.MIN_SPACE * 3; // todo: scale based on node size? or graph size
     private final double epsilon = 0.05d; // todo: probably make scalable based on repulsionConstant
     private final double cooling = 0.99999d;
@@ -116,14 +116,14 @@ public class ForceDirectedBuilder implements GraphBuilder {
         for (DrawableEdge edge : edges) edge.draw();
     }
 
-    private ArrayList<Point> calcForces(Graph graph, ArrayList<DrawableNode> nodes) {
+    private ArrayList<Point> calcForces(Graph graph, ArrayList<DrawableNode> nodes, int iteration) {
         ArrayList<Point> forces = new ArrayList<>();
 
         for (DrawableNode node : nodes) {
             Point forceOnNode = new Point(0, 0);
             for (DrawableNode compareNode : nodes) {
                 if (!node.equals(compareNode)) {
-                    Point force = calcForce(node, compareNode, graph.areConnected(node, compareNode));
+                    Point force = calcForce(node, compareNode, graph.areConnected(node, compareNode), iteration);
                     forceOnNode = forceOnNode.add(force);
                 }
             }
@@ -159,7 +159,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
     }
 
     private double applyForces(Graph graph, ArrayList<DrawableNode> nodes, int iteration) {
-        ArrayList<Point> forces = calcForces(graph, nodes);
+        ArrayList<Point> forces = calcForces(graph, nodes, iteration);
 
         double maxMove = 0;
         for (int nodeID = 0; nodeID < forces.size(); nodeID++) {
@@ -170,17 +170,22 @@ public class ForceDirectedBuilder implements GraphBuilder {
         return maxMove;
     }
 
-    private Point createRandomForce() {
-        return new Point((random.nextInt(2) * 2 - 1) * nodeCollisionForce, (random.nextDouble(2) * 2 - 1) * nodeCollisionForce);
+    private Point createRandomForce(int iteration) {
+        // todo: instead of this it might be an idea to add epsilon to 0s to prevent dividing by 0 instead of generating random values
+        return new Point((random.nextInt(2) * 2 - 1) * nodeCollisionForce/iteration, (random.nextDouble(2) * 2 - 1) * nodeCollisionForce/iteration);
     }
 
-    private Point calcRepulsion(DrawableNode node1, DrawableNode node2) {
-        if (node1.intersects(node2)) return createRandomForce();
+    private Point calcRepulsion(DrawableNode node1, DrawableNode node2, int iteration) {
+        if (needsSavedFromCollision(node1, node2)) return createRandomForce(iteration);
         return calcRepulsionBetween(node2.getCentre(), node1.getCentre(), repulsionConstant);
     }
 
-    private Point calcSpring(DrawableNode node1, DrawableNode node2) {
-        if (node1.intersects(node2)) return createRandomForce();
+    private boolean needsSavedFromCollision(DrawableNode node1, DrawableNode node2) {
+        return node1.getCentre().equals(node2.getCentre());
+    }
+
+    private Point calcSpring(DrawableNode node1, DrawableNode node2, int iteration) {
+        if (needsSavedFromCollision(node1, node2)) return createRandomForce(iteration);
         Point start = node1.getCentre();
         Point end = node2.getCentre();
 
@@ -191,9 +196,9 @@ public class ForceDirectedBuilder implements GraphBuilder {
         return start.getVectorTo(end).normalize().multiply(springConstant * logDistance);
     }
 
-    private Point calcForce(DrawableNode node1, DrawableNode node2, boolean connected) {
-        if (connected) return calcSpring(node1, node2);
-        return calcRepulsion(node1, node2);
+    private Point calcForce(DrawableNode node1, DrawableNode node2, boolean connected, int iteration) {
+        if (connected) return calcSpring(node1, node2, iteration);
+        return calcRepulsion(node1, node2, iteration);
     }
 
     private double calcCooling(double iteration) {
