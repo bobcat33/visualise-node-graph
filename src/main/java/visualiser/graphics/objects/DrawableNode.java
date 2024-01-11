@@ -378,21 +378,6 @@ public class DrawableNode extends StackPane {
         return true;
     }
 
-    /**
-     * Display data about the node for debugging.
-     * @deprecated only to be used for debugging
-     */
-    public void printNodeInfo() {
-
-        System.out.println("Node: " + id
-                + "\nCircle Radius: " + getCircleRadius()
-                + "\nNode Radius: " + getNodeRadius()
-                + "\nWidth: " + getNodeRadius()*2
-                + "\nCentre: ("  + getCentre().getX() + ", " + getCentre().getY() + ")"
-                + "\nOrigin: ("  + getOrigin().getX() + ", " + getOrigin().getY() + ")"
-        );
-    }
-
     public DrawableNode createCopy() {
         DrawableNode copy = new DrawableNode(graph, id, name, hoverAction);
         adjustCopyValues(copy);

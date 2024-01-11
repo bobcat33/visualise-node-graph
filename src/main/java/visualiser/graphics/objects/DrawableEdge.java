@@ -223,8 +223,8 @@ public class DrawableEdge extends Parent {
         Point closest = new Point(closestX, closestY);
 
         // Get the distance between the closest point and either end of the line
-        double d1 = closest.distance(x1, y1);
-        double d2 = closest.distance(x2, y2);
+        double d1 = closest.distanceTo(x1, y1);
+        double d2 = closest.distanceTo(x2, y2);
 
         // If the point is not on the line then the node does not intersect
         if (!(d1 + d2 >= lineLength-0.01 && d1 + d2 <= lineLength+0.01)) {

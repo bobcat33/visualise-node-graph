@@ -48,6 +48,14 @@ public class Graph extends Parent {
         loadDrawableEdges(edges);
     }
 
+    public void toggleCanvasFreeze() {
+        canvas.toggleFrozen();
+    }
+
+    public void setCanvasFrozen(boolean frozen) {
+        canvas.setFrozen(frozen);
+    }
+
     public void freezeCanvas() {
         canvas.freeze();
     }
@@ -256,26 +264,5 @@ public class Graph extends Parent {
      */
     public void clearCanvas() {
         canvas.clear();
-    }
-
-    /**
-     * @deprecated used for testing
-     */
-    public void drawDot(double x, double y) {
-        drawDot(new Dot(x, y));
-    }
-
-    /**
-     * @deprecated used for testing
-     */
-    public void drawDot(Point point) {
-        drawDot(point.getX(), point.getY());
-    }
-
-    /**
-     * @deprecated used for testing
-     */
-    public void drawDot(Dot dot) {
-        canvas.draw(dot);
     }
 }
