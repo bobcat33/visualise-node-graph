@@ -9,6 +9,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+import java.util.ArrayList;
+
 public class WeightedDrawableEdge extends DrawableEdge {
     public static final double
             WEIGHTED_CONTENT_BORDER_WIDTH = DrawableNode.BORDER_WIDTH,
@@ -34,8 +36,9 @@ public class WeightedDrawableEdge extends DrawableEdge {
     }
 
     @Override
-    public WeightedDrawableEdge createCopyWith(DrawableNode startNode, DrawableNode endNode) {
-        return createWeightedCopyWith(startNode, endNode, value);
+    public WeightedDrawableEdge createCopyWith(ArrayList<DrawableNode> copiedNodes) {
+        if (createCopyWith(copiedNodes, value) instanceof WeightedDrawableEdge weightedEdge) return weightedEdge;
+        throw new InvalidEdgeException(startNode, endNode); // todo: more clarity
     }
 
     public String value() {

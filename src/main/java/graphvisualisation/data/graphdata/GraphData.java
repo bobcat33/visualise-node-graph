@@ -1,9 +1,7 @@
-package graphvisualisation.data.graph;
+package graphvisualisation.data.graphdata;
 
-import graphvisualisation.data.graph.elements.Edge;
-import graphvisualisation.data.graph.elements.Node;
-import graphvisualisation.data.storage.DataLoader;
-import graphvisualisation.data.storage.InvalidFileException;
+import graphvisualisation.data.graphdata.elements.Edge;
+import graphvisualisation.data.graphdata.elements.Node;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;

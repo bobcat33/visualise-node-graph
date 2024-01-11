@@ -1,8 +1,8 @@
 package graphvisualisation.graphics.objects;
 
-import graphvisualisation.data.graph.elements.Node;
+import graphvisualisation.data.graphdata.elements.Node;
 import graphvisualisation.graphics.canvas.Point;
-import graphvisualisation.graphics.graphing.Graph;
+import graphvisualisation.graphics.Graph;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -28,11 +28,12 @@ public class DrawableNode extends StackPane {
     protected final Text textID;
     protected final Circle hoverMask;
     protected HoverAction<DrawableNode> hoverAction;
+    // todo: might remove default hover action as it is unclear that this is set and when overwritten may cause confusion
     protected static final HoverAction<DrawableNode> defaultHoverAction = (node, isHovered) -> {
         if (!(node instanceof WeightedDrawableNode)) return;
         if (isHovered) node.setColours(Color.DARKRED, Color.rgb(255, 118, 118, 1), Color.DARKRED);
 //        if (isHovered) node.setColours(Color.DARKBLUE, Color.rgb(173, 216, 230, 1), Color.DARKBLUE);
-        else node.setColours(Color.BLACK, Color.TRANSPARENT, Color.BLACK);
+        else node.setColours(Color.BLACK, Color.WHITE, Color.BLACK);
     };
 
     public DrawableNode(Graph graph, Node node) {
@@ -393,7 +394,7 @@ public class DrawableNode extends StackPane {
     }
 
     public DrawableNode createCopy() {
-        DrawableNode copy = new DrawableNode(graph, id, name);
+        DrawableNode copy = new DrawableNode(graph, id, name, hoverAction);
         adjustCopyValues(copy);
         return copy;
     }

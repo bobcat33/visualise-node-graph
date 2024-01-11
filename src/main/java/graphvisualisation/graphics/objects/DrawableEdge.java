@@ -1,7 +1,7 @@
 package graphvisualisation.graphics.objects;
 
 import graphvisualisation.graphics.canvas.Point;
-import graphvisualisation.graphics.graphing.Graph;
+import graphvisualisation.graphics.Graph;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.Parent;
@@ -13,8 +13,6 @@ import javafx.scene.shape.StrokeLineCap;
 import java.util.ArrayList;
 
 public class DrawableEdge extends Parent {
-    // todo: add system for making edges double ended rather than creating two edges, this would be to prevent overlapping
-    //  lines over the arrows for bi-directional edges and allow for highlighting certain directions when weighted
     public static final Color LINE_COLOUR = Color.BLACK;
     public static final double
             LINE_SIZE = 2d,
@@ -26,17 +24,18 @@ public class DrawableEdge extends Parent {
     protected final Graph graph;
     protected final Polygon hoverMask = new Polygon();
     protected HoverAction<DrawableEdge> hoverAction;
+    // todo: might remove default hover action as it is unclear that this is set and when overwritten may cause confusion
     protected static final HoverAction<DrawableEdge> defaultHoverAction = (edge, isHovering) -> {
         if (!(edge instanceof WeightedDrawableEdge)) return;
         if (isHovering) edge.setColour(Color.RED);
         else edge.setColour(Color.BLACK);
     };
-    private DrawableEdge oppositeEdge = null;
+    private DrawableEdge oppositeEdge = null; // If the edge is copied this will still refer to the opposite edge on the original graph
     protected final EdgeLine edgeLine;
     protected Arrow arrow;
     private Color lineColour = Color.BLACK, arrowColour = Color.BLACK;
 
-    public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) {
+    public DrawableEdge(DrawableNode startNode, DrawableNode endNode, boolean directed) throws UndefinedNodeException, InvalidEdgeException {
         this(startNode, endNode, directed, defaultHoverAction);
     }
 
@@ -55,11 +54,15 @@ public class DrawableEdge extends Parent {
         this.hoverAction = hoverAction;
 
         if (directed) {
+            // Find the opposite edge to this one, if it exists
             this.oppositeEdge = graph.getEdge(endNode, startNode, true);
             if (oppositeEdge != null) {
-                if (oppositeEdge.oppositeEdge != null) throw new InvalidEdgeException(startNode, endNode); // todo: error clarity
-                oppositeEdge.oppositeEdge = this;
-                oppositeEdge.reconnect();
+                // If this is a copied edge then the original edge would already be stored as the opposite edge's
+                // opposite edge, if it isn't then set it to this one.
+                if (oppositeEdge.oppositeEdge == null) {
+                    oppositeEdge.oppositeEdge = this;
+                    oppositeEdge.reconnect();
+                }
             }
         }
 
@@ -264,8 +267,20 @@ public class DrawableEdge extends Parent {
         return startNode.getCentre().getVectorTo(endNode.getCentre()).normalize();
     }
 
-    public DrawableEdge createCopyWith(DrawableNode startNode, DrawableNode endNode) {
-        DrawableEdge copy = new DrawableEdge(startNode, endNode, directed);
+    public DrawableEdge createCopyWith(ArrayList<DrawableNode> copiedNodes) {
+        return createCopyWith(copiedNodes, null);
+    }
+
+    protected DrawableEdge createCopyWith(ArrayList<DrawableNode> copiedNodes, String value) {
+        DrawableNode node1 = null;
+        DrawableNode node2 = null;
+        for (DrawableNode copiedNode : copiedNodes) {
+            if (copiedNode.equals(startNode)) node1 = copiedNode;
+            if (copiedNode.equals(endNode)) node2 = copiedNode;
+        }
+        DrawableEdge copy;
+        if (value == null) copy = new DrawableEdge(node1, node2, directed, hoverAction);
+        else copy = new WeightedDrawableEdge(node1, node2, directed, value, hoverAction);
         adjustCopyValues(copy);
         return copy;
     }
@@ -274,11 +289,6 @@ public class DrawableEdge extends Parent {
         copy.setColours(lineColour, arrowColour);
     }
 
-    protected WeightedDrawableEdge createWeightedCopyWith(DrawableNode startNode, DrawableNode endNode, String value) {
-        WeightedDrawableEdge copy = new WeightedDrawableEdge(startNode, endNode, directed, value, hoverAction);
-        adjustCopyValues(copy);
-        return copy;
-    }
 
     public class Arrow extends Polygon {
 

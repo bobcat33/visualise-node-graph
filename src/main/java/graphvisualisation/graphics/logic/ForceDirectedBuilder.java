@@ -1,7 +1,7 @@
 package graphvisualisation.graphics.logic;
 
 import graphvisualisation.graphics.canvas.Point;
-import graphvisualisation.graphics.graphing.Graph;
+import graphvisualisation.graphics.Graph;
 import graphvisualisation.graphics.objects.DrawableEdge;
 import graphvisualisation.graphics.objects.DrawableNode;
 import javafx.animation.KeyFrame;
@@ -29,6 +29,8 @@ public class ForceDirectedBuilder implements GraphBuilder {
 
     private final AnimationType animationType;
     private final boolean drawInitialGraph;
+    private boolean canBuild = true;
+    private EndAction endAction;
 
     public enum AnimationType {
         FULL_ANIMATION,
@@ -51,6 +53,8 @@ public class ForceDirectedBuilder implements GraphBuilder {
 
     @Override
     public void build(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges) {
+        if (!canBuild) return;
+        canBuild = false;
         System.out.println("Placing nodes.");
 
         if (drawInitialGraph) buildInitialGraph(graph, nodes, edges);
@@ -82,9 +86,22 @@ public class ForceDirectedBuilder implements GraphBuilder {
                 graph.returnNodesToSnapshot(startSnapshot);
                 graph.unfreezeCanvas();
                 slideNodesTo(endSnapshot, nodes);
-            }
+            } else stoppedRunning();
         }
 
+    }
+
+    private void stoppedRunning() {
+        canBuild = true;
+        if (endAction != null) endAction.handle();
+    }
+
+    public boolean isRunning() {
+        return !canBuild;
+    }
+
+    public void setEndAction(EndAction endAction) {
+        this.endAction = endAction;
     }
 
     private void buildInitialGraph(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges) {
@@ -191,45 +208,10 @@ public class ForceDirectedBuilder implements GraphBuilder {
     }
 
     private void slideNodesTo(ArrayList<Point> endPoints, ArrayList<DrawableNode> nodes) {
-        Timeline timeline = new Timeline();
-        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(1), new SlideFrame(nodes, endPoints)));
-        timeline.setCycleCount(slideDuration);
-        timeline.play();
-    }
-
-    private class SlideFrame implements EventHandler<ActionEvent> {
-        private final ArrayList<DrawableNode> nodes;
-        private final ArrayList<Point> endPoints;
-        private int frameNumber = 0;
-
-        private SlideFrame(ArrayList<DrawableNode> nodes, ArrayList<Point> endPoints) {
-            this.nodes = nodes;
-            this.endPoints = endPoints;
-        }
-
-        @Override
-        public void handle(ActionEvent actionEvent) {
-            double remainingFrames = slideDuration - frameNumber;
-            double distanceMultiplier = 1d / remainingFrames;
-            for (int i = 0; i < nodes.size(); i++) {
-                DrawableNode node = nodes.get(i);
-                Point nodeCentre = node.getCentre();
-                Point endPoint = endPoints.get(i);
-                double distance = nodeCentre.distanceTo(endPoint);
-                double travelDistance = distance * distanceMultiplier;
-                Point normalisedVector = nodeCentre.getVectorTo(endPoint).normalize();
-                Point movementVector = normalisedVector.multiply(travelDistance);
-                node.moveTo(nodeCentre.add(movementVector));
-            }
-            if (++frameNumber == slideDuration) {
-                System.out.println("Sliding complete.");
-                for (int i = 0; i < nodes.size(); i++) {
-                    DrawableNode node = nodes.get(i);
-                    Point endPoint = endPoints.get(i);
-                    System.out.println(node.toString() + ": " + node.getCentre() + " - " + endPoint);
-                }
-            }
-        }
+        new NodeSlider(nodes, endPoints, slideDuration, () -> {
+            System.out.println("Sliding complete.");
+            stoppedRunning();
+        }).start();
     }
 
     private class FullFrame implements EventHandler<ActionEvent> {
@@ -251,6 +233,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
                 System.out.println("Forces applied.");
                 timeline.stop();
                 graph.unfreezeCanvas();
+                stoppedRunning();
             }
 
         }

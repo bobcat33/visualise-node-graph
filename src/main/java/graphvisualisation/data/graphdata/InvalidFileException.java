@@ -1,4 +1,4 @@
-package graphvisualisation.data.storage;
+package graphvisualisation.data.graphdata;
 
 public class InvalidFileException extends RuntimeException {
 

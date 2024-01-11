@@ -5,6 +5,7 @@ directed:weighted
 5 1;5 and 1 weight value
 4 3;4 and 3 weight value
 2 1;2 and 1 weight value
+1 2;1 and 2 weight value
 7 6;7 and 6 weight value
 8 5;8 and 5 weight value
 9 5;9 and 5 weight value

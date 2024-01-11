@@ -1,10 +1,9 @@
-package graphvisualisation.data.storage;
+package graphvisualisation.data.graphdata;
 
-import graphvisualisation.data.graph.GraphData;
-import graphvisualisation.data.graph.elements.Edge;
-import graphvisualisation.data.graph.elements.Node;
-import graphvisualisation.data.graph.elements.WeightedEdge;
-import graphvisualisation.data.graph.elements.WeightedNode;
+import graphvisualisation.data.graphdata.elements.Edge;
+import graphvisualisation.data.graphdata.elements.Node;
+import graphvisualisation.data.graphdata.elements.WeightedEdge;
+import graphvisualisation.data.graphdata.elements.WeightedNode;
 import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 
 import java.io.File;
@@ -18,13 +17,18 @@ public class DataLoader {
     private static final String baseDelimiter = ";";
 
     // todo: require specified file paths / File objects
-    public static GraphData loadGraphData() throws FileNotFoundException, InvalidFileException {
+    public static GraphData loadGraphData() {
         ArrayList<Node> nodes = loadNodes();
         return new GraphData(nodes, loadEdges(nodes));
     }
 
-    public static ArrayList<Node> loadNodes() throws FileNotFoundException, InvalidFileException {
-        Scanner fileScanner = new Scanner(nodeFile);
+    public static ArrayList<Node> loadNodes() {
+        Scanner fileScanner;
+        try {
+            fileScanner = new Scanner(nodeFile);
+        } catch (FileNotFoundException e) {
+            throw new InvalidFileException();
+        }
 
         ArrayList<Node> nodes = new ArrayList<>();
 
@@ -51,12 +55,18 @@ public class DataLoader {
                 nodes.add(new Node(lineNum-1, name));
             }
         }
+        fileScanner.close();
 
         return nodes;
     }
 
-    public static ArrayList<Edge> loadEdges(ArrayList<Node> nodes) throws FileNotFoundException, InvalidFileException {
-        Scanner fileScanner = new Scanner(edgeFile);
+    public static ArrayList<Edge> loadEdges(ArrayList<Node> nodes) {
+        Scanner fileScanner;
+        try {
+            fileScanner = new Scanner(edgeFile);
+        } catch (FileNotFoundException e) {
+            throw new InvalidFileException();
+        }
 
         int nextID = getMaxID(nodes) + 1;
 
@@ -215,7 +225,9 @@ public class DataLoader {
         // If one of the delimiters incorporates the other, like "-" and "->", then take whichever is longer
         // This means that 1-2 and 1->2 would give different results
         if (indexDirected == indexUndirected) return directedDelimiter.length() > undirectedDelimiter.length();
-        return indexDirected != -1;
+        if (indexDirected == -1) return false;
+        if (indexUndirected == -1) return true;
+        return indexDirected < indexUndirected;
     }
 
     private static int getMaxID(ArrayList<Node> nodes) {
@@ -235,16 +247,16 @@ public class DataLoader {
         return value.replaceAll("\"(.*)\"", "$1");
     }
 
-    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed) throws InvalidFileException {
+    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed) {
         return createEdges(nodes, loadedValues, directed, null);
     }
 
-    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, ArrayList<Boolean> mixedDirections) throws InvalidFileException {
+    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, ArrayList<Boolean> mixedDirections) {
         if (mixedDirections == null) throw new InvalidFileException();
         return createEdges(nodes, loadedValues, true, mixedDirections);
     }
 
-    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed, ArrayList<Boolean> mixedDirections) throws InvalidFileException {
+    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed, ArrayList<Boolean> mixedDirections) {
         if (mixedDirections != null && loadedValues.size() != mixedDirections.size()) throw new InvalidFileException();
 
         ArrayList<Edge> edges = new ArrayList<>();

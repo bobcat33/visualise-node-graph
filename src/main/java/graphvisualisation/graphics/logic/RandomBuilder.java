@@ -1,6 +1,6 @@
 package graphvisualisation.graphics.logic;
 
-import graphvisualisation.graphics.graphing.Graph;
+import graphvisualisation.graphics.Graph;
 import graphvisualisation.graphics.objects.DrawableEdge;
 import graphvisualisation.graphics.objects.DrawableNode;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;

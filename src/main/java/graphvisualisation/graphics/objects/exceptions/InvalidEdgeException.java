@@ -1,6 +1,6 @@
 package graphvisualisation.graphics.objects.exceptions;
 
-import graphvisualisation.data.graph.elements.Node;
+import graphvisualisation.data.graphdata.elements.Node;
 import graphvisualisation.graphics.objects.DrawableNode;
 
 public class InvalidEdgeException extends RuntimeException {

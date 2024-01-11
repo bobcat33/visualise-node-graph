@@ -1,4 +1,4 @@
-package graphvisualisation.data.graph.elements;
+package graphvisualisation.data.graphdata.elements;
 
 public class Node {
 

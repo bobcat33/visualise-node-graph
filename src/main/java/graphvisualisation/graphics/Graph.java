@@ -1,12 +1,11 @@
-package graphvisualisation.graphics.graphing;
+package graphvisualisation.graphics;
 
-import graphvisualisation.data.graph.GraphData;
-import graphvisualisation.data.graph.elements.Edge;
-import graphvisualisation.data.graph.elements.Node;
-import graphvisualisation.data.graph.elements.WeightedEdge;
-import graphvisualisation.data.graph.elements.WeightedNode;
-import graphvisualisation.data.storage.DataLoader;
-import graphvisualisation.data.storage.InvalidFileException;
+import graphvisualisation.data.graphdata.GraphData;
+import graphvisualisation.data.graphdata.elements.Edge;
+import graphvisualisation.data.graphdata.elements.Node;
+import graphvisualisation.data.graphdata.elements.WeightedEdge;
+import graphvisualisation.data.graphdata.elements.WeightedNode;
+import graphvisualisation.data.graphdata.DataLoader;
 import graphvisualisation.graphics.canvas.Canvas;
 import graphvisualisation.graphics.canvas.Point;
 import graphvisualisation.graphics.logic.GraphBuilder;
@@ -17,7 +16,6 @@ import graphvisualisation.graphics.objects.exceptions.InvalidEdgeException;
 import graphvisualisation.graphics.objects.exceptions.UndefinedNodeException;
 import javafx.scene.Parent;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 public class Graph extends Parent {
@@ -30,15 +28,15 @@ public class Graph extends Parent {
     /**Maximum radius among nodes that have been stored on this canvas. Includes nodes that have not been drawn.*/
     private double maxNodeRadius = 0;
 
-    public Graph(GraphBuilder builder, double width, double height) throws InvalidFileException, FileNotFoundException, InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
+    public Graph(GraphBuilder builder, double width, double height) throws InvalidEdgeException, DuplicateNodeException, DuplicateEdgeException {
         this(builder, width, height, DataLoader.loadGraphData());
     }
 
-    public Graph(GraphBuilder builder, double width, double height, GraphData graphData) throws InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
+    public Graph(GraphBuilder builder, double width, double height, GraphData graphData) throws InvalidEdgeException, DuplicateNodeException, DuplicateEdgeException {
         this(builder, width, height, graphData.getNodes(), graphData.getEdges());
     }
 
-    public Graph(GraphBuilder builder, double width, double height, ArrayList<Node> nodes, ArrayList<Edge> edges) throws InvalidEdgeException, UndefinedNodeException, DuplicateNodeException, DuplicateEdgeException {
+    public Graph(GraphBuilder builder, double width, double height, ArrayList<Node> nodes, ArrayList<Edge> edges) throws InvalidEdgeException, DuplicateNodeException, DuplicateEdgeException {
         this.width = width;
         this.height = height;
         this.builder = builder;
@@ -94,11 +92,11 @@ public class Graph extends Parent {
         return height;
     }
 
-    public void build() throws InvalidEdgeException, UndefinedNodeException {
+    public void build() {
         buildWith(builder);
     }
 
-    public void buildWith(GraphBuilder builder) throws InvalidEdgeException, UndefinedNodeException {
+    public void buildWith(GraphBuilder builder) {
         builder.build(this, nodes, edges);
     }
 

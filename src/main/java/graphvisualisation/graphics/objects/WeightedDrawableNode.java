@@ -1,8 +1,8 @@
 package graphvisualisation.graphics.objects;
 
-import graphvisualisation.data.graph.elements.WeightedNode;
+import graphvisualisation.data.graphdata.elements.WeightedNode;
 import graphvisualisation.graphics.canvas.Point;
-import graphvisualisation.graphics.graphing.Graph;
+import graphvisualisation.graphics.Graph;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;

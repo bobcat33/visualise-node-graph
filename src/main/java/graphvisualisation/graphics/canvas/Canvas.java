@@ -39,15 +39,8 @@ public class Canvas extends Parent {
 
         // For every existing edge, find its copied nodes and create a copy of the edge connecting the copied nodes
         for (DrawableEdge existingEdge : existingEdges) {
-            DrawableNode startNode = null;
-            DrawableNode endNode = null;
-            for (DrawableNode copiedNode : copiedNodes) {
-                if (copiedNode.id() == existingEdge.startNode().id()) startNode = copiedNode;
-                else if (copiedNode.id() == existingEdge.endNode().id()) endNode = copiedNode;
-            }
-
             // Draw the copied edge
-            draw(existingEdge.createCopyWith(startNode, endNode));
+            draw(existingEdge.createCopyWith(copiedNodes));
         }
     }
 
