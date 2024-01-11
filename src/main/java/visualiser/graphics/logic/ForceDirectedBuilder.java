@@ -14,43 +14,85 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class ForceDirectedBuilder implements GraphBuilder {
-    private final double repulsionConstant = 10000d; // todo: make scalable based on node size and idealEdgeLength
-    private final double sideRepulsionConstant = 1000d;
-    private final double springConstant = 1d; // todo: make scalable based on idealEdgeLength
-    private final double nodeCollisionForce = 1d;
-    private final double idealEdgeLength = DrawableNode.MIN_SPACE * 3; // todo: scale based on node size? or graph size
-    private final double epsilon = 0.05d; // todo: probably make scalable based on repulsionConstant
-    private final double cooling = 0.99999d;
-    private final int maxIterations = 1000000000;
-    private final int frameDuration = 1;
-    private final int slideDuration = 3000;
-    private final boolean sidesRepel = true;
-    private final Random random = new Random();
+    // todo: made all constants modifiable
+    private static final double
+            REPULSION_CONSTANT = 10000d,
+            SIDE_REPULSION_CONSTANT = 1000d,
+            SPRING_CONSTANT = 1d, // todo: make scalable based on idealEdgeLength
+            NODE_COLLISION_FORCE = 1d,
+            IDEAL_EDGE_LENGTH = DrawableNode.MIN_SPACE * 3, // todo: scale based on node size or graph size
+            EPSILON = 0.05d, // todo: probably make scalable based on repulsionConstant
+            COOLING = 0.99999d;
+    private static final int
+            MAX_ITERATIONS = 1000000000,
+            FRAME_DURATION = 1,
+            SLIDE_DURATION = 3000;
+    private static final boolean sidesRepel = true;
 
+    private final Random random = new Random();
     private final AnimationType animationType;
     private final boolean drawInitialGraph;
+
     private boolean canBuild = true;
     private EndAction endAction;
 
+    /**
+     * The type of animations for the force-directed graph building algorithm.
+     * <ul>
+     *     <li>{@link #FULL_ANIMATION} - Fully animated forces.</li>
+     *     <li>{@link #SLIDE_TO_END} - Slide to the end position.</li>
+     *     <li>{@link #NONE} - No animation.</li>
+     * </ul>
+     */
     public enum AnimationType {
+        /** Fully animated graph drawing. Animates the forces from start to finish.
+         * @see AnimationType*/
         FULL_ANIMATION,
+        /** Partially animated graph drawing. Animates a smooth movement directly from the start position to the end
+         * result.
+         * @see AnimationType*/
         SLIDE_TO_END,
+        /** No animation. Produces the end result immediately.
+         * @see AnimationType*/
         NONE
     }
 
+    /**
+     * Create a new force-directed builder which will have no animation and will draw the initial random graph.
+     */
     public ForceDirectedBuilder() {
         this(AnimationType.NONE);
     }
 
+    /**
+     * Create a new force-directed builder which will draw the initial random graph.
+     * @param animationType the type of {@link AnimationType animation} to use when building the graph using the
+     *                      force-directed algorithm
+     */
     public ForceDirectedBuilder(AnimationType animationType) {
         this(animationType, true);
     }
 
+    /**
+     * Create a new force-directed builder.
+     * @param animationType the type of {@link AnimationType animation} to use when building the graph using the
+     *                      force-directed algorithm
+     * @param drawInitialRandomGraph if true the builder will randomise the nodes' positions before applying the
+     *                               algorithm, if false the algorithm will be applied immediately without moving
+     *                               the nodes first
+     */
     public ForceDirectedBuilder(AnimationType animationType, boolean drawInitialRandomGraph) {
         this.animationType = animationType;
         this.drawInitialGraph = drawInitialRandomGraph;
     }
 
+    /**
+     * Build a graph using the force-directed algorithm. This method will only execute if the previous build has
+     * completed, this includes animated builds.
+     * @param graph the {@link Graph graph} that is being built
+     * @param nodes the {@link DrawableNode nodes} that exist on the graph
+     * @param edges the {@link DrawableEdge edges} that exist on the graph
+     */
     @Override
     public void build(Graph graph, ArrayList<DrawableNode> nodes, ArrayList<DrawableEdge> edges) {
         if (!canBuild) return;
@@ -63,9 +105,9 @@ public class ForceDirectedBuilder implements GraphBuilder {
 
         if (animationType.equals(AnimationType.FULL_ANIMATION)) {
             Timeline timeline = new Timeline();
-            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(frameDuration),
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(FRAME_DURATION),
                     new FullFrame(graph, nodes, timeline)));
-            timeline.setCycleCount(maxIterations);
+            timeline.setCycleCount(MAX_ITERATIONS);
             timeline.play();
         }
 
@@ -77,7 +119,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
             }
 
             int t = 0;
-            while (t++ < maxIterations && applyForces(graph, nodes, t) > epsilon) {}
+            while (t++ < MAX_ITERATIONS && applyForces(graph, nodes, t) > EPSILON) {}
             System.out.println("Forces applied.");
 
             if (animationType.equals(AnimationType.SLIDE_TO_END)) {
@@ -96,10 +138,17 @@ public class ForceDirectedBuilder implements GraphBuilder {
         if (endAction != null) endAction.handle();
     }
 
+    /**
+     * @return true if an animation or build is currently running, false otherwise
+     */
     public boolean isRunning() {
         return !canBuild;
     }
 
+    /**
+     * Set the event handler for when the algorithm/animation finishes.
+     * @param endAction the {@link EndAction} to be stored
+     */
     public void setEndAction(EndAction endAction) {
         this.endAction = endAction;
     }
@@ -145,10 +194,10 @@ public class ForceDirectedBuilder implements GraphBuilder {
         Point right = new Point(graphWidth, centre.getY());
 
         Point force = new Point();
-        force = force.add(calcRepulsionBetween(top, centre, sideRepulsionConstant));
-        force = force.add(calcRepulsionBetween(bottom, centre, sideRepulsionConstant));
-        force = force.add(calcRepulsionBetween(left, centre, sideRepulsionConstant));
-        force = force.add(calcRepulsionBetween(right, centre, sideRepulsionConstant));
+        force = force.add(calcRepulsionBetween(top, centre, SIDE_REPULSION_CONSTANT));
+        force = force.add(calcRepulsionBetween(bottom, centre, SIDE_REPULSION_CONSTANT));
+        force = force.add(calcRepulsionBetween(left, centre, SIDE_REPULSION_CONSTANT));
+        force = force.add(calcRepulsionBetween(right, centre, SIDE_REPULSION_CONSTANT));
 
         return force;
     }
@@ -172,12 +221,12 @@ public class ForceDirectedBuilder implements GraphBuilder {
 
     private Point createRandomForce(int iteration) {
         // todo: instead of this it might be an idea to add epsilon to 0s to prevent dividing by 0 instead of generating random values
-        return new Point((random.nextInt(2) * 2 - 1) * nodeCollisionForce/iteration, (random.nextDouble(2) * 2 - 1) * nodeCollisionForce/iteration);
+        return new Point((random.nextInt(2) * 2 - 1) * NODE_COLLISION_FORCE /iteration, (random.nextDouble(2) * 2 - 1) * NODE_COLLISION_FORCE /iteration);
     }
 
     private Point calcRepulsion(DrawableNode node1, DrawableNode node2, int iteration) {
         if (needsSavedFromCollision(node1, node2)) return createRandomForce(iteration);
-        return calcRepulsionBetween(node2.getCentre(), node1.getCentre(), repulsionConstant);
+        return calcRepulsionBetween(node2.getCentre(), node1.getCentre(), REPULSION_CONSTANT);
     }
 
     private boolean needsSavedFromCollision(DrawableNode node1, DrawableNode node2) {
@@ -189,11 +238,11 @@ public class ForceDirectedBuilder implements GraphBuilder {
         Point start = node1.getCentre();
         Point end = node2.getCentre();
 
-        double distance = end.distanceTo(start) / idealEdgeLength;
+        double distance = end.distanceTo(start) / IDEAL_EDGE_LENGTH;
         double logDistance = Math.log(distance);
 
 
-        return start.getVectorTo(end).normalize().multiply(springConstant * logDistance);
+        return start.getVectorTo(end).normalize().multiply(SPRING_CONSTANT * logDistance);
     }
 
     private Point calcForce(DrawableNode node1, DrawableNode node2, boolean connected, int iteration) {
@@ -202,7 +251,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
     }
 
     private double calcCooling(double iteration) {
-        return Math.pow(cooling, iteration);
+        return Math.pow(COOLING, iteration);
     }
 
     private double moveNode(DrawableNode node, Point vector) {
@@ -213,7 +262,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
     }
 
     private void slideNodesTo(ArrayList<Point> endPoints, ArrayList<DrawableNode> nodes) {
-        new NodeSlider(nodes, endPoints, slideDuration, () -> {
+        new NodeSlider(nodes, endPoints, SLIDE_DURATION, () -> {
             System.out.println("Sliding complete.");
             stoppedRunning();
         }).start();
@@ -234,7 +283,7 @@ public class ForceDirectedBuilder implements GraphBuilder {
         @Override
         public void handle(ActionEvent actionEvent) {
 
-            if (t++ >= maxIterations || applyForces(graph, nodes, t) <= epsilon) {
+            if (t++ >= MAX_ITERATIONS || applyForces(graph, nodes, t) <= EPSILON) {
                 System.out.println("Forces applied.");
                 timeline.stop();
                 graph.unfreezeCanvas();
