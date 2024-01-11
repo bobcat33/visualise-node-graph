@@ -13,33 +13,116 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class DataLoader {
-    private static final File nodeFile = new File("src/main/java/visualiser/data/storage/Nodes.txt");
-    private static final File edgeFile = new File("src/main/java/visualiser/data/storage/Edges.txt");
+    private static final File defaultNodeFile = new File("src/main/java/visualiser/data/storage/Nodes.txt");
+    private static final File defaultEdgeFile = new File("src/main/java/visualiser/data/storage/Edges.txt");
     private static final String defaultDelimiter = ";";
     private static final String commentPrefix = "//";
 
-    // todo: Make non-static and initialise with file names / file objects or default files
+    private final File nodeFile;
+    private final File edgeFile;
+
+    private GraphData graphData = null;
 
     /**
-     * Create a new {@link GraphData} object using data from Nodes.txt and Edges.txt. If the Nodes.txt file is not
-     * found node data will be loaded from the Edges.txt file only.
-     * @return the GraphData object created
+     * Create a new DataLoader object with default file paths:
+     * <br/>src/main/java/visualiser/data/storage/Nodes.txt
+     * <br/>src/main/java/visualiser/data/storage/Edges.txt
      */
-    public static GraphData loadGraphData() {
+    public DataLoader() {
+        this(defaultNodeFile, defaultEdgeFile);
+    }
+
+    /**
+     * Create a new DataLoader object to read from an edges file.
+     * @param edgeFilePath the string filepath of the edges file, to be passed into {@link File}
+     */
+    public DataLoader(String edgeFilePath) {
+        this(new File(edgeFilePath));
+    }
+
+    /**
+     * Create a new DataLoader object to read from both a nodes file and an edges file.
+     * @param nodeFilePath the string filepath of the nodes file, to be passed into {@link File}
+     * @param edgeFilePath the string filepath of the edges file, to be passed into {@link File}
+     */
+    public DataLoader(String nodeFilePath, String edgeFilePath) {
+        this(new File(nodeFilePath), new File(edgeFilePath));
+    }
+
+    /**
+     * Create a new DataLoader object to read from an edges file.
+     * @param edgeFile the edges {@link File}
+     */
+    public DataLoader(File edgeFile) {
+        this(null, edgeFile);
+    }
+
+    /**
+     * Create a new DataLoader object to read from both a nodes file and an edges file.
+     * @param nodeFile the nodes {@link File}
+     * @param edgeFile the edges {@link File}
+     */
+    public DataLoader(File nodeFile, File edgeFile) {
+        this.nodeFile = nodeFile;
+        this.edgeFile = edgeFile;
+    }
+
+    /**
+     * If {@link #loadGraphData()} has already been called get the loaded graph data, if it hasn't been called then
+     * load the data from the file(s). To reload graph data call {@link #loadGraphData()} instead.
+     * @return the loaded graph data
+     */
+    public GraphData getGraphData() {
+        if (graphData == null) return loadGraphData();
+        return graphData;
+    }
+
+    /**
+     * If {@link #loadGraphData()} has already been called get the loaded nodes, if it hasn't been called then
+     * load all data from the file(s). To reload graph data call {@link #loadGraphData()} instead.
+     * @return the loaded nodes
+     */
+    public ArrayList<Node> getNodes() {
+        return getGraphData().getNodes();
+    }
+
+    /**
+     * If {@link #loadGraphData()} has already been called get the loaded edges, if it hasn't been called then
+     * load all data from the file(s). To reload graph data call {@link #loadGraphData()} instead.
+     * @return the loaded edges
+     */
+    public ArrayList<Edge> getEdges() {
+        return getGraphData().getEdges();
+    }
+
+    /**
+     * Load and store a new {@link GraphData} object using data from Nodes.txt and Edges.txt. If the Nodes.txt file is
+     * not found node data will be loaded from the Edges.txt file only.
+     * @return the GraphData object created
+     * @see #getGraphData()
+     * @see #getNodes()
+     * @see #getEdges()
+     */
+    public GraphData loadGraphData() {
         ArrayList<Node> nodes;
-        try {
-            nodes = loadNodes();
-        } catch (FileNotFoundException ignored) {
-            nodes = new ArrayList<>();
+        if (nodeFile == null) nodes = new ArrayList<>();
+        else {
+            try {
+                nodes = loadNodes();
+            } catch (FileNotFoundException e) {
+                nodes = new ArrayList<>();
+            }
         }
-        return new GraphData(nodes, loadEdges(nodes));
+        graphData = new GraphData(nodes, loadEdges(nodes));
+        return graphData;
     }
 
     /**
      * Load an array of {@link Node Nodes} from the Nodes.txt file.
      * @return a new ArrayList of Nodes
      */
-    public static ArrayList<Node> loadNodes() throws FileNotFoundException {
+    private ArrayList<Node> loadNodes() throws FileNotFoundException {
+        if (nodeFile == null) throw new FileNotFoundException();
         Scanner fileScanner;
         fileScanner = new Scanner(nodeFile);
 
@@ -94,20 +177,12 @@ public class DataLoader {
     }
 
     /**
-     * Load edges from the Edges.txt file, use this method for data without any predefined nodes.
-     * @return an ArrayList of {@link Edge Edges}
-     */
-    public static ArrayList<Edge> loadEdges() {
-        return loadEdges(null);
-    }
-
-    /**
      * Load edges from the Edges.txt file with a set of predefined nodes. Any new nodes found in the Edges.txt file
      * will be created and added to the nodes array.
      * @param nodes the predefined {@link Node Nodes} to be added to with new nodes and read from for existing nodes
      * @return an ArrayList of {@link Edge Edges}
      */
-    public static ArrayList<Edge> loadEdges(ArrayList<Node> nodes) {
+    private ArrayList<Edge> loadEdges(ArrayList<Node> nodes) {
         // If the nodes have not been defined then initialise as a new array
         if (nodes == null) nodes = new ArrayList<>();
 
@@ -294,7 +369,7 @@ public class DataLoader {
      * @param undirectedDelimiter the delimiter for an undirected line
      * @return true if the line is directed, false if undirected, null if invalid
      */
-    private static Boolean calcDirectedMixed(String line, String directedDelimiter, String undirectedDelimiter) {
+    private Boolean calcDirectedMixed(String line, String directedDelimiter, String undirectedDelimiter) {
         int indexDirected = line.indexOf(directedDelimiter);
         int indexUndirected = line.indexOf(undirectedDelimiter);
         // If neither delimiter was found, or either starts at 0 (meaning there is no content before it)
@@ -319,7 +394,7 @@ public class DataLoader {
      * @param nodes the nodes to search
      * @return the greatest ID among the nodes
      */
-    private static int getMaxID(ArrayList<Node> nodes) {
+    private int getMaxID(ArrayList<Node> nodes) {
         int maxID = -1;
         for (Node node : nodes) {
             if (node.id() > maxID) maxID = node.id();
@@ -331,7 +406,7 @@ public class DataLoader {
      * Remove leading and trailing whitespace from all strings in an array.
      * @param parts the array to trim
      */
-    private static void trimParts(String[] parts) {
+    private void trimParts(String[] parts) {
         for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim();
     }
 
@@ -342,7 +417,7 @@ public class DataLoader {
      * @return the value stripped of the quotes that were surrounding it
      * @throws InvalidFileException if the value does not start and end with quotes
      */
-    private static String loadDelimiter(int lineNum, String value) throws InvalidFileException {
+    private String loadDelimiter(int lineNum, String value) throws InvalidFileException {
         if (!value.startsWith("\"") || !value.endsWith("\""))
             throw new InvalidFileException(lineNum, "Line is defining a delimiter but not surrounded by quotes (\"\")");
         return value.replaceAll("\"(.*)\"", "$1");
@@ -357,7 +432,7 @@ public class DataLoader {
      * @return the {@link Edge edges} created
      * @see #createEdges(ArrayList, ArrayList, ArrayList)
      */
-    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed) {
+    private ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed) {
         return createEdges(nodes, loadedValues, directed, null);
     }
 
@@ -371,7 +446,7 @@ public class DataLoader {
      * @return the {@link Edge edges} created
      * @see #createEdges(ArrayList, ArrayList, boolean)
      */
-    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, ArrayList<Boolean> mixedDirections) {
+    private ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, ArrayList<Boolean> mixedDirections) {
         if (mixedDirections == null) throw new InvalidFileException("Cannot create edges with invalid directions");
         return createEdges(nodes, loadedValues, true, mixedDirections);
     }
@@ -390,7 +465,7 @@ public class DataLoader {
      * @see #createEdges(ArrayList, ArrayList, boolean)
      * @see #createEdges(ArrayList, ArrayList, ArrayList)
      */
-    private static ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed, ArrayList<Boolean> mixedDirections) {
+    private ArrayList<Edge> createEdges(ArrayList<Node> nodes, ArrayList<String[]> loadedValues, boolean directed, ArrayList<Boolean> mixedDirections) {
         if (mixedDirections != null && loadedValues.size() != mixedDirections.size()) throw new InvalidFileException("Cannot create edges with invalid directions");
 
         ArrayList<Edge> edges = new ArrayList<>();

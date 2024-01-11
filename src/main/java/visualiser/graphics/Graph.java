@@ -29,7 +29,7 @@ public class Graph extends Parent {
     private double maxNodeRadius = 0;
 
     public Graph(GraphBuilder builder, double width, double height) throws InvalidEdgeException, DuplicateNodeException, DuplicateEdgeException {
-        this(builder, width, height, DataLoader.loadGraphData());
+        this(builder, width, height, new DataLoader().loadGraphData());
     }
 
     public Graph(GraphBuilder builder, double width, double height, GraphData graphData) throws InvalidEdgeException, DuplicateNodeException, DuplicateEdgeException {
