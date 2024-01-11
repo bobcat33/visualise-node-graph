@@ -4,8 +4,8 @@ module VisualiseNodeGraph {
     requires javafx.fxml;
 
 
-    opens graphvisualisation to javafx.fxml;
-    exports graphvisualisation;
+    opens visualiser to javafx.fxml;
+    exports visualiser;
 
 
 
