@@ -1,4 +1,4 @@
-package visualiser.data.graphdata.elements;
+package visualiser.data.elements;
 
 import visualiser.graphics.objects.exceptions.InvalidEdgeException;
 

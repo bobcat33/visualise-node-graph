@@ -1,4 +1,4 @@
-package visualiser.data.graphdata.elements;
+package visualiser.data.elements;
 
 public class WeightedNode extends Node {
     private final String value;

@@ -1,6 +1,6 @@
 package visualiser.graphics.objects;
 
-import visualiser.data.graphdata.elements.Node;
+import visualiser.data.elements.Node;
 import visualiser.graphics.canvas.Point;
 import visualiser.graphics.Graph;
 import javafx.scene.layout.StackPane;

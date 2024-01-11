@@ -1,7 +1,8 @@
-package visualiser.data.graphdata;
+package visualiser.data;
 
-import visualiser.data.graphdata.elements.Edge;
-import visualiser.data.graphdata.elements.Node;
+import visualiser.data.elements.Edge;
+import visualiser.data.elements.Node;
+import visualiser.data.exceptions.InvalidDataException;
 
 import java.util.ArrayList;
 

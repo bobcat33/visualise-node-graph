@@ -1,6 +1,6 @@
 package visualiser.graphics.objects.exceptions;
 
-import visualiser.data.graphdata.elements.Edge;
+import visualiser.data.elements.Edge;
 
 public class DuplicateEdgeException extends RuntimeException {
     public DuplicateEdgeException(Edge edge) {

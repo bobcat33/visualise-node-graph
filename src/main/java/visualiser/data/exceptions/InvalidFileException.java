@@ -1,4 +1,4 @@
-package visualiser.data.graphdata;
+package visualiser.data.exceptions;
 
 public class InvalidFileException extends RuntimeException {
 

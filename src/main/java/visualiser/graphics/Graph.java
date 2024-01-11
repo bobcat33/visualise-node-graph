@@ -1,11 +1,11 @@
 package visualiser.graphics;
 
-import visualiser.data.graphdata.GraphData;
-import visualiser.data.graphdata.elements.Edge;
-import visualiser.data.graphdata.elements.Node;
-import visualiser.data.graphdata.elements.WeightedEdge;
-import visualiser.data.graphdata.elements.WeightedNode;
-import visualiser.data.graphdata.DataLoader;
+import visualiser.data.GraphData;
+import visualiser.data.elements.Edge;
+import visualiser.data.elements.Node;
+import visualiser.data.elements.WeightedEdge;
+import visualiser.data.elements.WeightedNode;
+import visualiser.data.DataLoader;
 import visualiser.graphics.canvas.Canvas;
 import visualiser.graphics.canvas.Point;
 import visualiser.graphics.logic.GraphBuilder;

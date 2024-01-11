@@ -1,9 +1,10 @@
-package visualiser.data.graphdata;
+package visualiser.data;
 
-import visualiser.data.graphdata.elements.Edge;
-import visualiser.data.graphdata.elements.Node;
-import visualiser.data.graphdata.elements.WeightedEdge;
-import visualiser.data.graphdata.elements.WeightedNode;
+import visualiser.data.elements.Edge;
+import visualiser.data.elements.Node;
+import visualiser.data.elements.WeightedEdge;
+import visualiser.data.elements.WeightedNode;
+import visualiser.data.exceptions.InvalidFileException;
 import visualiser.graphics.objects.exceptions.InvalidEdgeException;
 
 import java.io.File;

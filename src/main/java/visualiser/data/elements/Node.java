@@ -1,6 +1,6 @@
-package visualiser.data.graphdata.elements;
+package visualiser.data.elements;
 
-import visualiser.data.graphdata.InvalidDataException;
+import visualiser.data.exceptions.InvalidDataException;
 
 public class Node {
 

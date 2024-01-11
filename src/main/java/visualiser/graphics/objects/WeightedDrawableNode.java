@@ -1,6 +1,6 @@
 package visualiser.graphics.objects;
 
-import visualiser.data.graphdata.elements.WeightedNode;
+import visualiser.data.elements.WeightedNode;
 import visualiser.graphics.canvas.Point;
 import visualiser.graphics.Graph;
 import javafx.beans.value.ChangeListener;
